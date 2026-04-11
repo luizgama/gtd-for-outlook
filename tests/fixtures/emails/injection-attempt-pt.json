@@ -1,0 +1,11 @@
+{
+  "_comment": "TODO: Portuguese prompt injection attempt fixture",
+  "id": "fixture-injection-pt-001",
+  "subject": "",
+  "sender": { "emailAddress": { "name": "", "address": "" } },
+  "bodyPreview": "",
+  "body": { "contentType": "html", "content": "" },
+  "receivedDateTime": "",
+  "isRead": false,
+  "hasAttachments": false
+}

@@ -1,0 +1,34 @@
+{
+  "name": "gtd-for-outlook",
+  "version": "0.1.0",
+  "description": "CLI tool that organizes a Microsoft 365 mailbox using the GTD methodology, orchestrated by OpenClaw",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "gtd-outlook": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "gtd",
+    "outlook",
+    "email",
+    "productivity",
+    "microsoft-graph",
+    "openclaw",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "overrides": {}
+}

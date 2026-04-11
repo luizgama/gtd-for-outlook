@@ -1,0 +1,7 @@
+{
+  "id": "gtd-outlook",
+  "name": "GTD for Outlook",
+  "version": "0.1.0",
+  "description": "Organize Microsoft 365 mailbox using GTD methodology with prompt injection defense",
+  "entry": "./index.ts"
+}

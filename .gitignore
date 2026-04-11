@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# npm
+*.tgz
+npm-debug.log*
+
+# GTD local data (user-specific, not committed)
+.gtd-outlook/
+
+# TypeScript incremental
+*.tsbuildinfo

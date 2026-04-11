@@ -1,0 +1,89 @@
+# GTD for Outlook
+
+A CLI tool that organizes your Microsoft 365 mailbox using the **Getting Things Done (GTD)** methodology, orchestrated by the **OpenClaw** AI agent framework.
+
+## Features
+
+- **Automated email classification** using GTD methodology (Capture, Clarify, Organize, Reflect, Engage)
+- **Multi-layer prompt injection defense** — emails are untrusted input processed safely in any language
+- **Volume processing** — handles thousands of emails via batching, checkpointing, metadata triage, and content-hash deduplication
+- **Persistent scheduling** — automatic inbox processing via OpenClaw cron
+- **Token caching** — authenticate once, run unattended
+
+## Status
+
+**Pre-implementation** — Project scaffolding complete. MVP validation spikes pending.
+
+See [docs/BACKLOG.md](docs/BACKLOG.md) for the full task list and [docs/plan.md](docs/plan.md) for the implementation plan.
+
+## Prerequisites
+
+- Node.js 22+
+- A Microsoft 365 account
+- An Azure App Registration with `Mail.ReadWrite` permissions
+
+## Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/luizgama/gtd-for-outlook.git
+cd gtd-for-outlook
+npm ci
+
+# Configure Azure credentials
+cp .env.example .env
+# Edit .env with your Azure App ID and Tenant ID
+
+# First-time setup
+gtd-outlook setup
+
+# Process your inbox
+gtd-outlook process
+
+# Set up automatic processing every 30 minutes
+gtd-outlook schedule --interval 30
+```
+
+## Commands
+
+```
+gtd-outlook setup                     # Interactive first-time setup
+gtd-outlook process                   # Full GTD pipeline: Capture, Clarify, Organize
+gtd-outlook process --batch-size 100  # Process 100 emails per batch
+gtd-outlook process --max-emails 500  # Cap total emails this run
+gtd-outlook process --since 30d       # Process emails from last 30 days
+gtd-outlook process --backlog         # First-time backlog migration
+gtd-outlook capture                   # Only fetch new emails
+gtd-outlook clarify                   # Only classify fetched emails
+gtd-outlook organize                  # Only move classified emails
+gtd-outlook review                    # Generate weekly review
+gtd-outlook dashboard                 # Show current action items
+gtd-outlook status                    # Show connection & folder status
+gtd-outlook cache stats               # Classification cache statistics
+gtd-outlook schedule --interval 30    # Auto-process every 30 minutes
+```
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/plan.md](docs/plan.md) for detailed architecture documentation.
+
+## Security
+
+Email content is treated as **untrusted input** that may contain prompt injection attacks in any language. The system uses a 6-layer defense strategy:
+
+1. Structural sanitization (language-agnostic)
+2. Dual-LLM injection detection (multilingual)
+3. Sandboxed classification via `llm-task` (JSON-only, no tools)
+4. Schema validation (TypeBox)
+5. Post-classification guardrails
+6. Structural prompt design
+
+See [docs/specs/06-prompt-injection.md](docs/specs/06-prompt-injection.md) for details.
+
+## Contributing
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for development guidelines.
+
+## License
+
+MIT - see [LICENSE](LICENSE)
