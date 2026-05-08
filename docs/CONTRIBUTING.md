@@ -36,7 +36,7 @@ npm run lint           # Type check
 
 This project processes untrusted email content with LLMs. Security is not optional:
 
-- Read `docs/CLAUDE.md` for mandatory security rules
+- Read `docs/AGENTS.md` for mandatory security rules
 - Read `docs/specs/06-prompt-injection.md` for the defense strategy
 - All email content handling must go through the sanitization pipeline
 - Never relax security layers without explicit approval
@@ -46,7 +46,7 @@ This project processes untrusted email content with LLMs. Security is not option
 - **Pin exact versions** — no `^` or `~` in `package.json`
 - **Minimize dependencies** — prefer Node.js built-ins
 - **No new dependencies** without justification in the PR description
-- See `docs/CLAUDE.md` for the full supply chain security policy
+- See `docs/AGENTS.md` for the full supply chain security policy
 
 ### Testing
 

@@ -4,7 +4,7 @@
 
 This is a conclusion project for a Certificate in IA Solution Architecture. The goal is to build an open-source CLI tool that organizes a Microsoft 365 mailbox using the **Getting Things Done (GTD)** methodology, orchestrated by the **OpenClaw** framework. It must be proactively safeguarded against prompt injection attacks in email content (in any language), and serve as the first certification project to use OpenClaw.
 
-The repository (`luizgama/gtd-for-outlook`) is currently empty. We are building from scratch on branch `claude/gtd-mailbox-organizer-xrjqb`.
+The repository (`luizgama/gtd-for-outlook`) is scaffolded but not implemented. Source files, test files, OpenClaw workspace files, and planning docs exist; most source modules are placeholders. The next work item is pre-implementation validation, not production implementation.
 
 ---
 
@@ -54,8 +54,8 @@ The repository (`luizgama/gtd-for-outlook`) is currently empty. We are building 
 | AI Classification | OpenClaw `llm-task` (model-agnostic) | JSON-only sandboxed email classification |
 | Prompt Injection | Multi-layer defense, language-agnostic (see below) | Protect against adversarial email content in any language |
 | CLI | `commander` + `inquirer` | User-facing command-line interface |
-| Content Hashing | `xxhash-wasm` (XXH64, pure WASM) | Fast non-cryptographic hashing for classification dedup |
-| Cache Storage | SQLite via `better-sqlite3` | Persistent classification cache with indexed lookups |
+| Content Hashing | `node:crypto` SHA-256 | Built-in deterministic hashing for classification dedup |
+| Cache Storage | SQLite via `sql.js` | Persistent classification cache without native postinstall scripts |
 | Testing | `vitest` | Unit and integration tests |
 | Language | TypeScript (ESM) | Primary language |
 | Runtime | Node.js 22+ | Required by OpenClaw |
@@ -73,6 +73,25 @@ The repository (`luizgama/gtd-for-outlook`) is currently empty. We are building 
 
 ---
 
+### Decision: Microsoft Graph Permissions
+
+Use the least-privilege delegated permission set for the MVP:
+
+- Required: `Mail.ReadWrite` — read unread mail, create/list folders, move messages, and apply categories
+- Not required: `Mail.Send` — the MVP does not send email
+
+If a later feature sends weekly summaries or notifications through Outlook, add `Mail.Send` in a separate ADR and setup migration.
+
+---
+
+### Decision: Cache and Hashing Dependencies
+
+Use `node:crypto` SHA-256 for content hashes instead of `xxhash-wasm`. Email-sized payloads do not justify an additional hashing dependency, and collision resistance is useful for a cache key even though the cache is not a security boundary.
+
+Use `sql.js` for the local classification cache instead of `better-sqlite3`. The project disables npm postinstall scripts by default, and native SQLite bindings conflict with that policy. `sql.js` keeps the indexed SQLite model while remaining compatible with `ignore-scripts=true`. Spike C validates exact package behavior before dependencies are locked.
+
+---
+
 ## Dependency & Supply Chain Security Policy
 
 Security is a **high priority** for this project. The following rules are enforced:
@@ -83,9 +102,9 @@ Security is a **high priority** for this project. The following rules are enforc
 4. **Use `npm ci` in CI/CD** — Always use `npm ci` (clean install) instead of `npm install` in pipelines. It uses `package-lock.json` exclusively, guaranteeing only tested exact versions are installed.
 5. **Pin transitive dependencies** — Use the `overrides` field in `package.json` to force safe versions of critical transitive dependencies across the entire tree.
 6. **Disable postinstall scripts** — Default npm config: `npm config set ignore-scripts true`. Run scripts explicitly only when needed.
-7. **Package cooldown** — Avoid installing packages published within the last 7 days: `npm config set min-release-age 7`.
+7. **Package cooldown** — Avoid installing packages published within the last 7 days. `.npmrc` documents this policy; enable `min-release-age=7` only when the active npm version supports it.
 
-These rules will be documented in `CLAUDE.md` so all contributors (human and AI) follow them.
+These rules are documented in `docs/AGENTS.md` so all contributors (human and AI) follow them.
 
 ---
 
@@ -96,7 +115,7 @@ gtd-for-outlook/
 ├── README.md                          # Project documentation
 ├── LICENSE                            # MIT License
 ├── package.json                       # Dependencies (exact versions only)
-├── package-lock.json                  # Lockfile (used by npm ci)
+├── package-lock.json                  # Lockfile, generated after dependency validation
 ├── tsconfig.json                      # TypeScript configuration
 ├── vitest.config.ts                   # Test configuration
 ├── .env.example                       # Environment variable template
@@ -104,9 +123,10 @@ gtd-for-outlook/
 ├── .npmrc                             # npm security config (ignore-scripts, min-release-age)
 │
 ├── docs/                              # All project documentation
-│   ├── CLAUDE.md                      # AI development instructions & security rules
+│   ├── AGENTS.md                      # AI development instructions & security rules
 │   ├── CONTRIBUTING.md                # Contribution guidelines
 │   ├── BACKLOG.md                     # Feature backlog & roadmap
+│   ├── EXECUTION_MAP.md               # Implementation sequencing and interfaces
 │   ├── FUTURE_FEATURES.md            # Planned future features
 │   ├── ARCHITECTURE.md               # Detailed architecture doc
 │   ├── specs/
@@ -142,7 +162,7 @@ gtd-for-outlook/
 │   │
 │   ├── plugin/                        # OpenClaw plugin
 │   │   ├── index.ts                   # Plugin entry (definePluginEntry)
-│   │   ├── manifest.json              # openclaw.plugin.json
+│   │   ├── manifest.json              # OpenClaw plugin manifest
 │   │   └── tools/                     # Registered tools
 │   │       ├── graph-fetch.ts         # Fetch emails from Graph API
 │   │       ├── graph-organize.ts      # Move/categorize emails
@@ -172,7 +192,7 @@ gtd-for-outlook/
 │   ├── pipeline/                      # Volume processing pipeline
 │   │   ├── batch-processor.ts        # Paginated batch processing with checkpoints
 │   │   ├── triage.ts                 # Metadata-only fast triage (no LLM)
-│   │   ├── dedup.ts                  # Content-hash deduplication (xxhash-wasm + SQLite)
+│   │   ├── dedup.ts                  # Content-hash deduplication (SHA-256 + sql.js SQLite)
 │   │   ├── state.ts                  # Checkpoint persistence (~/.gtd-outlook/state.json)
 │   │   └── limits.ts                 # Execution limits enforcement
 │   │
@@ -341,19 +361,19 @@ Before spending LLM tokens, use **heuristics on email metadata** to pre-sort:
 - Estimated LLM call reduction: **40-70%** for typical corporate mailboxes
 - Triage rules are configurable in `~/.gtd-outlook/config.json`
 
-### Strategy 4: Content-Hash Deduplication (`xxhash-wasm`)
+### Strategy 4: Content-Hash Deduplication (`node:crypto`)
 Emails with identical content (notifications, alerts, CC/BCC duplicates) are classified only once:
-1. After sanitization (Layer 1), compute **XXH64 hash** of `normalized_subject + normalized_body`
-2. Look up hash in SQLite classification cache (`~/.gtd-outlook/classification-cache.db`)
+1. After sanitization (Layer 1), compute a **SHA-256 hash** of `normalized_subject + normalized_body` using `node:crypto`
+2. Look up hash in the `sql.js` SQLite classification cache (`~/.gtd-outlook/classification-cache.db`)
 3. **Cache hit** → skip all LLM calls, reuse stored classification result
 4. **Cache miss** → run full security + classification pipeline, store result keyed by hash
 
-**Why xxHash?** Non-cryptographic, ~60x faster than SHA-256 (~30 GB/s vs ~500 MB/s). Collision resistance is not needed here — we're doing content comparison, not security verification. `xxhash-wasm` is a pure WASM implementation with zero native dependencies.
+**Why SHA-256?** It is built into Node.js, removes a dependency, is deterministic across runtimes, and is fast enough for email-sized payloads. The cache is not a security boundary, but a collision-resistant key avoids surprising cache reuse.
 
 **Cache schema:**
 ```sql
 CREATE TABLE classification_cache (
-  hash         TEXT PRIMARY KEY,   -- XXH64 of normalized content
+  hash         TEXT PRIMARY KEY,   -- SHA-256 of normalized content
   category     TEXT NOT NULL,      -- "@Action", "@WaitingFor", etc.
   result_json  TEXT NOT NULL,      -- Full classification result
   created_at   INTEGER NOT NULL,   -- Unix timestamp
@@ -397,7 +417,7 @@ Instead of polling, subscribe to real-time email arrival notifications via Graph
 **No interactive login every time.** The auth flow works as follows:
 
 1. **First run** (`gtd-outlook setup`): Interactive device code flow — user authenticates once in browser
-2. **Token caching**: MSAL persists tokens (access + refresh) to an encrypted local file (`~/.gtd-outlook/token-cache.json`)
+2. **Token caching**: MSAL persists tokens (access + refresh) to a private local file (`~/.gtd-outlook/token-cache.json`) created with owner-only permissions (`0600`)
 3. **Subsequent runs**: MSAL silently acquires tokens using the cached refresh token — no user interaction
 4. **Token refresh**: When access token expires (~1 hour), MSAL automatically uses the refresh token to get a new one
 5. **Configuration**: Client ID and tenant ID stored in `~/.gtd-outlook/config.json` or environment variables
@@ -406,11 +426,13 @@ Instead of polling, subscribe to real-time email arrival notifications via Graph
 // src/graph/auth.ts — key approach
 import { PublicClientApplication, TokenCacheContext } from "@azure/msal-node";
 
-// Persistent token cache plugin reads/writes to local encrypted file
+// Persistent token cache plugin reads/writes to a private local file
 // After first auth, all subsequent calls use silent token acquisition
 const result = await msalClient.acquireTokenSilent(silentRequest);
 // Falls back to device code only if no cached tokens exist
 ```
+
+**Security decision:** The MVP does not claim encrypted token storage. It uses MSAL's cache serialization plus strict local file permissions because that is implementable with Node built-ins and compatible with unattended cron. OS keychain or platform-specific encryption is a future hardening item.
 
 `.env.example` will document required Azure App Registration settings:
 ```
@@ -610,9 +632,9 @@ The entire architecture depends on OpenClaw working as expected. If any of these
 
 Validates that we can actually read and organize emails in a real Microsoft 365 mailbox.
 
-- [ ] **B1. Azure App Registration** — Register an app in Azure Portal with `Mail.ReadWrite` and `Mail.Send` permissions (delegated). Document the exact steps, required admin consent status, and whether personal Microsoft accounts work vs. organizational only.
+- [ ] **B1. Azure App Registration** — Register an app in Azure Portal with delegated `Mail.ReadWrite` only. Document the exact steps, required admin consent status, and whether personal Microsoft accounts work vs. organizational only.
 - [ ] **B2. MSAL Device Code Flow** — Using `@azure/msal-node`, authenticate via device code flow. Verify: (a) the device code URL + code are displayed, (b) after browser auth, an access token is returned, (c) the token includes the `Mail.ReadWrite` scope.
-- [ ] **B3. Token Cache Persistence** — Configure MSAL's cache serialization plugin to persist tokens to `~/.gtd-outlook/token-cache.json`. Restart the script. Verify `acquireTokenSilent` succeeds without re-auth. This is critical for cron — no human available to re-authenticate.
+- [ ] **B3. Token Cache Persistence** — Configure MSAL's cache serialization plugin to persist tokens to `~/.gtd-outlook/token-cache.json` with owner-only file permissions (`0600`). Restart the script. Verify `acquireTokenSilent` succeeds without re-auth. This is critical for cron — no human available to re-authenticate.
 - [ ] **B4. Token Refresh** — Wait for the access token to expire (~1 hour, or force expiry). Verify MSAL automatically uses the refresh token to obtain a new access token without user interaction.
 - [ ] **B5. Fetch Emails** — `GET /me/messages?$top=10&$select=id,subject,sender,bodyPreview,receivedDateTime,isRead,hasAttachments`. Verify structured response with all expected fields. Record: is body returned as HTML or plain text? What's the max bodyPreview length?
 - [ ] **B6. Fetch Full Email Body** — `GET /me/messages/{id}?$select=body`. Verify the full HTML body is returned. Test with: plain text email, HTML email, email with inline images, email with attachments. Understand what sanitization will need to handle.
@@ -632,13 +654,13 @@ Validates that we can actually read and organize emails in a real Microsoft 365 
 
 Validates that key npm packages work under our security constraints.
 
-- [ ] **C1. `better-sqlite3` with `ignore-scripts=true`** — Install with `.npmrc` containing `ignore-scripts=true`. Attempt to open a database and run a query. **Expected risk**: `better-sqlite3` has native C++ bindings compiled via a postinstall script. With scripts disabled, it will likely fail. **If it fails**: test `sql.js` (pure WASM SQLite, no native bindings) as the fallback. Document the decision.
-- [ ] **C2. `xxhash-wasm` in ESM on Node.js 22+** — `import { xxh64 } from 'xxhash-wasm'` in an ESM module. Compute hash of a sample email body string. Verify: (a) import works without CJS/ESM issues, (b) output is deterministic (same input → same hash), (c) performance is reasonable (hash 1000 email-sized strings, measure time).
-- [ ] **C3. `xxhash-wasm` vs `node:crypto` benchmark** — Compare XXH64 vs SHA-256 on 100-byte, 1KB, 10KB, and 50KB payloads (representative email sizes). Confirm xxHash is meaningfully faster. If the difference is negligible at email sizes, we could use `node:crypto` and eliminate the dependency.
+- [ ] **C1. `sql.js` with `ignore-scripts=true`** — Install with `.npmrc` containing `ignore-scripts=true`. Open a database, create the classification cache table, insert a row, serialize to `~/.gtd-outlook/classification-cache.db`, reload it, and query the row.
+- [ ] **C2. `node:crypto` SHA-256 hashing** — Hash normalized email content in an ESM module. Verify deterministic output and acceptable runtime for 1000 representative email-sized strings.
+- [ ] **C3. Dependency install under security policy** — Install exact pinned versions for required runtime/dev packages with scripts disabled. Verify `npm ci` works from a clean checkout and produces no caret/tilde ranges in `package.json`.
 - [ ] **C4. `@sinclair/typebox` standalone validation** — Use TypeBox to define the classification output schema. Validate conforming JSON, non-conforming JSON, and JSON with extra fields. Verify rejection behavior. This is used both in OpenClaw tools (Spike A4) and in Layer 4 guardrails standalone.
 - [ ] **C5. `commander` + `inquirer` interactive flow** — Build a minimal interactive setup: prompt for Client ID, Tenant ID, confirm. Verify it works in terminal. Test non-interactive mode (piped input) for CI environments.
 
-**Go/No-Go**: C1 determines SQLite library choice. C2-C3 determine if xxhash-wasm is worth the dependency. C4-C5 are low risk but should be confirmed.
+**Go/No-Go**: C1 validates the cache storage choice. C2 validates the no-extra-dependency hashing choice. C3 confirms the dependency set is compatible with the supply-chain policy. C4-C5 are low risk but should be confirmed.
 
 ### Spike D: End-to-End MVP Flow
 
@@ -657,7 +679,7 @@ After individual spikes pass, wire the minimum viable path through the entire sy
 Independent (run in parallel):
   ├── A1 → A2 → A3 → A4 → A5 → A6 → A7 → A8 → A9  (OpenClaw chain)
   ├── B1 → B2 → B3 → B4                               (Graph auth chain)
-  └── C1, C2, C3, C4, C5                               (dependencies, all independent)
+  └── C1, C2, C3, C4, C5                               (dependencies and local compatibility)
 
 After auth chain (B1-B4):
   B5 → B6 → B7 → B8 → B9 → B10 → B11 → B12 → B13 → B14 → B15
@@ -683,7 +705,7 @@ Each spike must record:
 - Initialize `package.json` (exact pinned versions, `overrides` for transitive deps), `tsconfig.json`, `vitest.config.ts`
 - Create `.npmrc` with security config (`ignore-scripts=true`, `min-release-age=7`)
 - Create `README.md`, `LICENSE`, `.gitignore`, `.env.example`
-- Create `docs/CLAUDE.md` (with dependency security rules), `docs/CONTRIBUTING.md`, `docs/BACKLOG.md`
+- Create `docs/AGENTS.md` (with dependency security rules), `docs/CONTRIBUTING.md`, `docs/BACKLOG.md`
 - Create `docs/FUTURE_FEATURES.md`, `docs/ARCHITECTURE.md`
 - Create design spec docs (`docs/specs/01-06`)
 - Create ADRs (`docs/adr/001-openclaw-orchestration.md`, `docs/adr/002-direct-graph-api.md`)
@@ -708,19 +730,19 @@ Each spike must record:
 - Write tests for `batch-processor.ts`, `triage.ts`, `dedup.ts`, `state.ts`, `limits.ts`
 - Implement `pipeline/state.ts` — checkpoint persistence
 - Implement `pipeline/triage.ts` — metadata-only fast triage rules
-- Implement `pipeline/dedup.ts` — content-hash deduplication with `xxhash-wasm` + SQLite cache
+- Implement `pipeline/dedup.ts` — content-hash deduplication with `node:crypto` SHA-256 + `sql.js` SQLite cache
 - Implement `pipeline/limits.ts` — execution limits enforcement
 - Implement `pipeline/batch-processor.ts` — orchestrates paginated processing with all strategies
 
 ### Step 5: Microsoft Graph API Layer
-- Implement `graph/auth.ts` — MSAL with persistent encrypted token cache
+- Implement `graph/auth.ts` — MSAL with persistent private-file token cache
 - Implement `graph/client.ts` — authenticated Graph client with silent token refresh
 - Implement `graph/folders.ts` — create/list GTD folders
 - Implement `graph/emails.ts` — fetch, move, categorize emails
 - Write integration tests with mocked Graph responses
 
 ### Step 6: OpenClaw Plugin
-- Create `openclaw.plugin.json` manifest
+- Create `src/plugin/manifest.json` OpenClaw plugin manifest
 - Implement `plugin/index.ts` with `definePluginEntry`
 - Register all GTD tools (including `autoApprove` param on organize)
 - Wire tools to Graph API, classification modules, and volume pipeline
@@ -754,7 +776,7 @@ Each spike must record:
 5. **Auth test**: Verify token cache works — second run requires no interactive login
 6. **Volume test**: Simulate 500+ emails, verify batch processing respects limits, checkpoints correctly, and resumes on next run
 7. **Triage test**: Verify newsletters, noreply senders, and old emails are triaged without LLM calls
-8. **Dedup test**: Process 10 identical emails, verify only 1 LLM classification occurs and 9 are cache hits (XXH64)
+8. **Dedup test**: Process 10 identical emails, verify only 1 LLM classification occurs and 9 are cache hits (SHA-256)
 9. **Backlog test**: Simulate first-time setup with 1000+ old emails, verify progress reporting and newest-first ordering
 10. **Manual test**: Connect to a real Microsoft 365 mailbox, process 10 emails, verify folder organization
 11. **OpenClaw test**: Start gateway with plugin loaded, invoke tools via agent session
@@ -766,7 +788,7 @@ Each spike must record:
 
 1. `package.json` (exact versions, overrides), `tsconfig.json`, `vitest.config.ts`, `.npmrc`
 2. `README.md`, `LICENSE`, `.gitignore`, `.env.example`
-3. `docs/CLAUDE.md`, `docs/CONTRIBUTING.md`, `docs/BACKLOG.md`, `docs/FUTURE_FEATURES.md`, `docs/ARCHITECTURE.md`
+3. `docs/AGENTS.md`, `docs/CONTRIBUTING.md`, `docs/BACKLOG.md`, `docs/EXECUTION_MAP.md`, `docs/FUTURE_FEATURES.md`, `docs/ARCHITECTURE.md`
 4. `docs/specs/*.md`, `docs/adr/001-openclaw-orchestration.md`, `docs/adr/002-direct-graph-api.md`
 5. `src/config/constants.ts`, `src/config/settings.ts`
 6. `tests/fixtures/emails/*.json` (including multilingual injection attempts)
@@ -775,7 +797,7 @@ Each spike must record:
 9. `tests/unit/gtd/*.test.ts` (including `warnings.test.ts`)
 10. `src/gtd/*.ts` (including `warnings.ts`)
 11. `tests/unit/pipeline/*.test.ts` (batch-processor, triage, dedup, state, limits)
-12. `src/pipeline/*.ts` (batch-processor, triage, dedup with xxhash-wasm + SQLite, state, limits)
+12. `src/pipeline/*.ts` (batch-processor, triage, dedup with SHA-256 + sql.js SQLite, state, limits)
 13. `src/graph/*.ts` (with persistent token cache in `auth.ts`)
 14. `tests/unit/graph/*.test.ts`
 15. `src/plugin/manifest.json`, `src/plugin/index.ts`, `src/plugin/tools/*.ts`

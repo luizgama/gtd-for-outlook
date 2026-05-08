@@ -1,5 +1,17 @@
 # Backlog
 
+## Current Gate
+
+Production implementation is blocked until the MVP validation spikes below are completed and their decisions are recorded. The repository is scaffolded; use `docs/EXECUTION_MAP.md` for implementation order after this gate passes.
+
+## Resolved MVP Decisions
+
+- Microsoft Graph permissions: delegated `Mail.ReadWrite` only; no `Mail.Send` in the MVP.
+- Token cache: MSAL cache serialized to `~/.gtd-outlook/token-cache.json` with owner-only `0600` permissions; OS keychain/encryption is future hardening.
+- Content hash: `node:crypto` SHA-256; no `xxhash-wasm` dependency.
+- Classification cache: SQLite via `sql.js`; no native SQLite dependency requiring postinstall scripts.
+- Plugin manifest path: `src/plugin/manifest.json`.
+
 ## Pre-Implementation Validation (MVP Spikes)
 
 ### Spike A: OpenClaw Platform (Architecture-Critical)
@@ -16,9 +28,9 @@
 
 ### Spike B: Microsoft Graph API (Integration-Critical)
 
-- [ ] B1. Register Azure App with Mail.ReadWrite permissions
+- [ ] B1. Register Azure App with delegated Mail.ReadWrite permission only
 - [ ] B2. MSAL device code flow authentication
-- [ ] B3. Token cache persistence — silent re-auth after restart
+- [ ] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
 - [ ] B4. Token refresh — automatic refresh after expiry
 - [ ] B5. Fetch emails with structured response (id, subject, sender, body)
 - [ ] B6. Fetch full email body (HTML and plain text)
@@ -34,9 +46,9 @@
 
 ### Spike C: Dependency Compatibility
 
-- [ ] C1. `better-sqlite3` with `ignore-scripts=true` (or fallback to `sql.js`)
-- [ ] C2. `xxhash-wasm` ESM import on Node.js 22+ — deterministic output
-- [ ] C3. `xxhash-wasm` vs `node:crypto` SHA-256 benchmark
+- [ ] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
+- [ ] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime
+- [ ] C3. Exact pinned dependency install works under `.npmrc` security policy
 - [ ] C4. `@sinclair/typebox` standalone schema validation
 - [ ] C5. `commander` + `inquirer` interactive setup flow
 
@@ -51,6 +63,8 @@
 
 ## Implementation Tasks
 
+Detailed implementation order, first interfaces, and phase gates are documented in `docs/EXECUTION_MAP.md`. Keep this file as the task inventory and progress checklist.
+
 ### Step 1: Project Scaffolding & Docs
 
 - [x] Initialize `package.json` with exact pinned versions
@@ -58,12 +72,13 @@
 - [x] Create `.npmrc` with security config
 - [x] Create `.gitignore` and `.env.example`
 - [x] Create `LICENSE` (MIT)
-- [x] Create `docs/CLAUDE.md` with dependency security rules
+- [x] Create `docs/AGENTS.md` with dependency security rules
 - [x] Create `docs/CONTRIBUTING.md`
 - [x] Create `docs/BACKLOG.md` (this file)
 - [x] Create `docs/FUTURE_FEATURES.md`
 - [x] Create `docs/ARCHITECTURE.md`
 - [x] Create `docs/plan.md`
+- [x] Create `docs/EXECUTION_MAP.md`
 - [x] Create design spec stubs (`docs/specs/01-06`)
 - [x] Create ADR stubs (`docs/adr/001`, `docs/adr/002`)
 - [x] Create `README.md`
@@ -101,13 +116,13 @@
 - [ ] Write tests for `pipeline/batch-processor.ts`
 - [ ] Implement `pipeline/state.ts` — checkpoint persistence
 - [ ] Implement `pipeline/triage.ts` — metadata-only fast triage rules
-- [ ] Implement `pipeline/dedup.ts` — content-hash deduplication (xxhash-wasm + SQLite)
+- [ ] Implement `pipeline/dedup.ts` — content-hash deduplication (SHA-256 + sql.js SQLite)
 - [ ] Implement `pipeline/limits.ts` — execution limits enforcement
 - [ ] Implement `pipeline/batch-processor.ts` — orchestrate paginated processing
 
 ### Step 5: Microsoft Graph API Layer
 
-- [ ] Implement `graph/auth.ts` — MSAL with persistent encrypted token cache
+- [ ] Implement `graph/auth.ts` — MSAL with persistent private-file token cache
 - [ ] Implement `graph/client.ts` — authenticated Graph client with silent token refresh
 - [ ] Implement `graph/folders.ts` — create/list GTD folders
 - [ ] Implement `graph/emails.ts` — fetch, move, categorize emails
@@ -115,7 +130,7 @@
 
 ### Step 6: OpenClaw Plugin
 
-- [ ] Create `openclaw.plugin.json` manifest
+- [ ] Create `src/plugin/manifest.json` OpenClaw plugin manifest
 - [ ] Implement `plugin/index.ts` with `definePluginEntry`
 - [ ] Register `gtd_fetch_emails` tool
 - [ ] Register `gtd_classify_email` tool

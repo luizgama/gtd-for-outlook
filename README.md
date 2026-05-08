@@ -80,6 +80,12 @@ Email content is treated as **untrusted input** that may contain prompt injectio
 
 See [docs/specs/06-prompt-injection.md](docs/specs/06-prompt-injection.md) for details.
 
+## OpenClaw inside Docker Sandbox
+
+Docker Sandboxes run AI coding agents in isolated microVM sandboxes. Each sandbox gets its own Docker daemon, filesystem, and network — the agent can build containers, install packages, and modify files without touching your host system.
+
+See [https://docs.docker.com/ai/sandboxes/](https://docs.docker.com/ai/sandboxes/) to learn more
+
 ## Contributing
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for development guidelines.

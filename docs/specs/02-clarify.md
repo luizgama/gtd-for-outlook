@@ -7,5 +7,5 @@
 <!-- - Call llm-task with classification prompt (Layer 3) -->
 <!-- - Validate output against TypeBox schema (Layer 4) -->
 <!-- - Apply post-classification guardrails (Layer 5) -->
-<!-- - Content-hash deduplication via xxhash-wasm before LLM calls -->
+<!-- - Content-hash deduplication via node:crypto SHA-256 before LLM calls -->
 <!-- - Metadata-only fast triage for newsletters/notifications -->
