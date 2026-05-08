@@ -80,31 +80,32 @@ Status: A2 passed. A4 schema registration shape is present, but valid/invalid ag
 
 ## A3. Agent to Tool Invocation
 
-Status: blocked in this environment.
+Status: passed.
 
-Gateway startup required running outside the socket sandbox:
+Initial blocker: the first run used an isolated temporary `HOME=/tmp/gtd-openclaw-home2`, so it did not see the real OpenClaw auth profile. Running against the real OpenClaw profile used the configured `openai-codex/gpt-5.5` model.
 
-```text
-$ HOME=/tmp/gtd-openclaw-home2 openclaw gateway run --bind lan --port 19011 --auth token --token spike-token --allow-unconfigured --verbose
-[gateway] http server listening
-[gateway] ready
-```
-
-Health probe passed:
+The correct command shape is:
 
 ```text
-$ HOME=/tmp/gtd-openclaw-home2 openclaw gateway health --url ws://127.0.0.1:19011 --token spike-token --json
-{
-  "ok": true,
-  "defaultAgentId": "main"
-}
+$ openclaw agent --agent main --message "Use echo_tool with input 'hello' and return the result." --session-id spike-a3-allow-echo --json --timeout 120
 ```
 
-Agent invocation failed before tool use because the temporary state has no model auth profile:
+Additional setup needed for the real profile:
+
+- Link the spike plugin into the real OpenClaw profile.
+- Use the plugin directory in `plugins.load.paths` so OpenClaw can read `openclaw.plugin.json`.
+- Remove the stale `plugins.entries.index` entry created by installing the direct `index.mjs` path.
+- Refresh the plugin registry with `openclaw plugins registry --refresh --json`.
+- Keep `tools.profile` as `coding` and set `tools.allow` to include `echo_tool` and `typed_echo_tool` for the A3/A4 verification runs.
+
+Successful result:
 
 ```text
-$ HOME=/tmp/gtd-openclaw-home2 openclaw agent --message "Use echo_tool with input 'hello' and return the result." --session-id spike-a3 --json --timeout 60
-FailoverError: No API key found for provider "openai".
+$ openclaw agent --agent main --message "Use echo_tool with input 'hello' and return the result." --session-id spike-a3-coding-allow --json --timeout 120
+payload: "hello"
+provider: openai-codex
+model: gpt-5.5
+toolSummary.calls: 1
+toolSummary.tools: ["echo_tool"]
+toolSummary.failures: 0
 ```
-
-Next step: configure a throwaway model provider auth profile for the temporary OpenClaw state, or point the spike at an already configured OpenClaw profile, then rerun A3 and A4 through the agent.
