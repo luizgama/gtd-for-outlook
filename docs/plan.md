@@ -616,8 +616,8 @@ Before writing any production code, we must validate every assumption that would
 
 The entire architecture depends on OpenClaw working as expected. If any of these fail, the orchestration layer must be redesigned.
 
-- [ ] **A1. Install & Start Gateway** — `npm install openclaw`, start the gateway with a minimal config file. Verify it runs on Node.js 22+, accepts connections, and logs startup. Record the actual installed version and any peer dependency warnings.
-- [ ] **A2. Plugin Loading** — Create a minimal plugin using `definePluginEntry` that registers one dummy tool (`echo_tool` — returns its input). Load it into the gateway. Verify the tool appears in the agent's available tool list.
+- [x] **A1. Install & Start Gateway** — `npm install openclaw`, start the gateway with a minimal config file. Verify it runs on Node.js 22+, accepts connections, and logs startup. Record the actual installed version and any peer dependency warnings.
+- [x] **A2. Plugin Loading** — Create a minimal plugin using `definePluginEntry` that registers one dummy tool (`echo_tool` — returns its input). Load it into the gateway. Verify the tool appears in the agent's available tool list.
 - [ ] **A3. Agent → Tool Invocation** — Send a natural-language message to an agent (e.g., "Use echo_tool with input 'hello'"). Verify the agent calls the tool and the result flows back. This validates the full agent → tool → response loop.
 - [ ] **A4. TypeBox Tool Parameters** — Register a tool with `@sinclair/typebox` schema parameters (String, Number, Optional, Union, Literal). Invoke via agent. Verify parameter validation works — valid params succeed, invalid params are rejected.
 - [ ] **A5. `llm-task` JSON-Only Classification** — Call `llm-task` with a classification prompt, a sample email body as input, and a JSON schema for the output. Verify: (a) output is valid JSON, (b) output conforms to the schema, (c) no free-text leaks through. Test with adversarial input that tries to produce non-JSON output.

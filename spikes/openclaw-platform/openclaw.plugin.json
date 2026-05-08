@@ -1,0 +1,14 @@
+{
+  "id": "gtd-outlook-spike-a",
+  "name": "GTD Outlook Spike A",
+  "version": "0.0.0-spike",
+  "description": "Throwaway OpenClaw validation plugin for Spike A.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "contracts": {
+    "tools": ["echo_tool", "typed_echo_tool"]
+  }
+}
