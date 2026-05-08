@@ -16,15 +16,38 @@ Production implementation is blocked until the MVP validation spikes below are c
 
 ### Spike A: OpenClaw Platform (Architecture-Critical)
 
-- [ ] A1. Install & start OpenClaw Gateway on Node.js 22+
-- [ ] A2. Load a minimal plugin with `definePluginEntry` and register a dummy tool
-- [ ] A3. Agent invokes registered tool and receives result (full loop)
+- [x] A1. Install & start OpenClaw Gateway on Node.js 22+
+- [x] A2. Load a minimal plugin with `definePluginEntry` and register a dummy tool
+- [x] A3. Agent invokes registered tool and receives result (full loop)
 - [ ] A4. TypeBox schema validation works with tool parameters
+  - Use the existing `typed_echo_tool` spike tool.
+  - Run valid invocation via `openclaw agent --agent main ...` and verify `toolSummary.tools` includes `typed_echo_tool`.
+  - Run invalid invocations for wrong `count` type and invalid `mode` literal; verify OpenClaw rejects or does not execute the tool.
+  - Keep `tools.profile=coding` and `tools.allow=["echo_tool","typed_echo_tool"]` during this check.
 - [ ] A5. `llm-task` returns JSON-only output, validated against schema
+  - Enable `plugins.entries.llm-task.enabled=true`.
+  - Allow the optional tool for the test window (`tools.allow` or `tools.alsoAllow` per OpenClaw validation rules; do not set both in the same scope).
+  - Use configured `openai-codex/gpt-5.5` instead of a temporary `HOME` so auth profiles are available.
+  - Verify normal and adversarial email inputs return only parsed JSON conforming to schema.
 - [ ] A6. `llm-task` has no access to registered tools (tool isolation)
+  - Keep `echo_tool` installed and available in the agent tool list.
+  - Prompt `llm-task` with adversarial input requesting `echo_tool` execution.
+  - Verify `llm-task` returns schema-valid JSON and no `echo_tool` call appears in run/tool history.
 - [ ] A7. Sub-agent orchestration (parent agent coordinates Agent-A → Agent-B)
+  - First inspect `openclaw sessions_spawn`/`subagents` behavior in the current `main` agent config.
+  - Use isolated session ids for Agent-A and Agent-B and verify result handoff through the parent.
+  - Record whether multiple named agents must be configured before production can rely on Capture → Clarify → Organize separation.
 - [ ] A8. Cron scheduler fires on schedule, persists across gateway restart
+  - Use `openclaw cron add --every 1m --agent main --message ... --session isolated --tools echo_tool --json`.
+  - Verify `openclaw cron list/status/runs` and `~/.openclaw/cron/jobs.json`.
+  - Restart the gateway and confirm the job survives and fires again.
+  - Clean up the test cron job after validation.
 - [ ] A9. Session isolation — concurrent sessions don't share state
+  - Start two `openclaw agent` runs with distinct `--session-id` values and different `echo_tool` inputs.
+  - Verify each session transcript contains only its own input/output.
+  - Confirm no tool result or session state leaks when runs overlap.
+
+Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin loading, and A3 agent-to-tool invocation results.
 
 ### Spike B: Microsoft Graph API (Integration-Critical)
 
