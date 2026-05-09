@@ -1,0 +1,18 @@
+{
+  "id": "gtd-outlook",
+  "name": "GTD for Outlook",
+  "version": "0.1.0",
+  "description": "GTD Outlook plugin tools",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "contracts": {
+    "tools": [
+      "gtd_fetch_emails",
+      "gtd_classify_email",
+      "gtd_organize_email"
+    ]
+  }
+}

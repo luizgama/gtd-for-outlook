@@ -68,8 +68,55 @@ Notes:
 
 ## D3. Agent-Orchestrated Flow
 
-Status: pending.
+Status: blocked in current environment.
+
+Acceptance:
+
+- Natural language -> OpenClaw agent -> `gtd_fetch_emails` -> `gtd_classify_email` -> `gtd_organize_email`.
+
+Validation attempts:
+
+```bash
+openclaw gateway call tools.catalog --json --params '{"agentId":"main"}'
+openclaw agent --agent main --message "D3 validation: call gtd_fetch_emails and then gtd_classify_email and gtd_organize_email for one email." --session-id d3-validation
+```
+
+Evidence:
+
+```text
+Error: No callable tools remain after resolving explicit tool allowlist (tools.allow: echo_tool, typed_echo_tool, llm-task); no registered tools matched.
+```
+
+Notes:
+
+- Current agent runtime still resolves the old explicit allow-list and does not expose `gtd_*` tools.
+- `tools.catalog` currently reports only `echo_tool`, `typed_echo_tool`, and `llm-task` from plugin space.
 
 ## D4. Cron-Triggered Flow
 
-Status: pending.
+Status: blocked in current environment.
+
+Acceptance:
+
+- Cron fires -> agent runs D3 path -> idempotent no-op for already organized message.
+
+Validation attempts:
+
+```bash
+openclaw cron add --name spike-d4-validation --every 1m --agent main --message "D4 validation run: use gtd_fetch_emails then gtd_classify_email then gtd_organize_email for one email." --session isolated --json
+openclaw doctor
+```
+
+Evidence:
+
+```text
+GatewayTransportError: gateway closed (1006 abnormal closure (no close frame))
+Gateway not running.
+WSL2 needs systemd enabled.
+State directory not writable (~/.openclaw).
+```
+
+Notes:
+
+- D4 cannot be validated until gateway runtime health is restored.
+- Idempotency implementation is now available in code (`src/pipeline/state.ts` + `gtdOrganizeEmail` skip path), but cron runtime validation is pending environment recovery.

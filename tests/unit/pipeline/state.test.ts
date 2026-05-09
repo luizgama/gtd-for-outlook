@@ -1,6 +1,24 @@
-// TODO: Tests for pipeline/state.ts
-// - Save processing state to file
-// - Load state from file
-// - Track email status (pending, classified, organized)
-// - Idempotent: re-processing classified email is no-op
-// - Handle missing/corrupt state file gracefully
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { ProcessingStateStore } from "../../../src/pipeline/state";
+
+describe("pipeline/state", () => {
+  it("loads empty state when file is missing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "gtd-state-"));
+    const store = new ProcessingStateStore(join(dir, "state.json"));
+    expect(store.load()).toEqual({ processed: {} });
+  });
+
+  it("persists and reloads processed message state", () => {
+    const dir = mkdtempSync(join(tmpdir(), "gtd-state-"));
+    const store = new ProcessingStateStore(join(dir, "state.json"));
+
+    store.markProcessed("m1", "@Action");
+    const reloaded = store.getProcessed("m1");
+    expect(reloaded?.messageId).toBe("m1");
+    expect(reloaded?.category).toBe("@Action");
+    expect(typeof reloaded?.organizedAt).toBe("string");
+  });
+});
