@@ -66,17 +66,17 @@ Next active spike. Start here before production implementation because Graph aut
 - [x] B2. MSAL device code flow authentication
 - [x] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
 - [x] B4. Token refresh — automatic refresh after expiry
-- [ ] B5. Fetch emails with structured response (id, subject, sender, body)
-- [ ] B6. Fetch full email body (HTML and plain text)
-- [ ] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
+- [x] B5. Fetch emails with structured response (id, subject, sender, body)
+- [x] B6. Fetch full email body (HTML and plain text)
+- [x] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
 - [ ] B8. Pagination via `@odata.nextLink`
-- [ ] B9. Create mail folder with `@` prefix (e.g., `@Action`)
-- [ ] B10. Create nested mail folders
-- [ ] B11. List mail folders
-- [ ] B12. Move email to a different folder
-- [ ] B13. Apply Outlook category to email
-- [ ] B14. Rate limiting behavior (429 responses, Retry-After)
-- [ ] B15. Filter emails by date and order by receivedDateTime
+- [x] B9. Create mail folder with `@` prefix (e.g., `@Action`)
+- [x] B10. Create nested mail folders
+- [x] B11. List mail folders
+- [x] B12. Move email to a different folder
+- [x] B13. Apply Outlook category to email
+- [x] B14. Rate limiting behavior (429 responses, Retry-After)
+- [x] B15. Filter emails by date and order by receivedDateTime
 
 ### Spike C: Dependency Compatibility
 
