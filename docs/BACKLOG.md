@@ -1,100 +1,12 @@
 # Backlog
 
-## Current Gate
+### Current Gate
 
-Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete, and Spike D1/D2 are complete. The next active validation gate is **Spike D3/D4: agent-orchestrated and cron-triggered end-to-end flow with idempotency**.
+**Next Phase: Steps 2-4 — Security, GTD Logic, Pipeline (Foundation Modules)**
 
-Use the temporary root file `NEXT_PHASE_PLAN.md` as the handoff for the next context.
+Temporary handoff plans may use the ignored root `NEXT_PHASE_PLAN.md` file when needed. All implementation tasks for this phase should preserve dependency ordering and test-first requirements.
 
-## Resolved MVP Decisions
-
-- Microsoft Graph permissions: delegated `Mail.ReadWrite` only; no `Mail.Send` in the MVP.
-- Token cache: MSAL cache serialized to `~/.gtd-outlook/token-cache.json` with owner-only `0600` permissions; OS keychain/encryption is future hardening.
-- Content hash: `node:crypto` SHA-256; no `xxhash-wasm` dependency.
-- Classification cache: SQLite via `sql.js`; no native SQLite dependency requiring postinstall scripts.
-- Plugin manifest path: `src/plugin/manifest.json`.
-
-## Pre-Implementation Validation (MVP Spikes)
-
-### Spike A: OpenClaw Platform (Architecture-Critical)
-
-- [x] A1. Install & start OpenClaw Gateway on Node.js 22+
-- [x] A2. Load a minimal plugin with `definePluginEntry` and register a dummy tool
-- [x] A3. Agent invokes registered tool and receives result (full loop)
-- [x] A4. TypeBox schema validation works with tool parameters
-  - Use the existing `typed_echo_tool` spike tool.
-  - Run valid invocation via `openclaw agent --agent main ...` and verify `toolSummary.tools` includes `typed_echo_tool`.
-  - Run invalid invocations for wrong `count` type and invalid `mode` literal; verify OpenClaw rejects or does not execute the tool.
-  - Keep `tools.profile=coding` and `tools.allow=["echo_tool","typed_echo_tool"]` during this check.
-- [x] A5. `llm-task` returns JSON-only output, validated against schema
-  - Enable `plugins.entries.llm-task.enabled=true`.
-  - Allow the optional tool for the test window using `tools.allow=["echo_tool","typed_echo_tool","llm-task"]`.
-  - Use configured `openai-codex/gpt-5.5` instead of a temporary `HOME` so auth profiles are available.
-  - Verify normal and adversarial email inputs return only parsed JSON conforming to schema.
-  - Use direct `openclaw gateway call tools.invoke` rather than agent-mediated invocation for deterministic validation.
-  - Prompt must explicitly require every schema key; otherwise `llm-task` correctly rejects schema-incomplete model JSON.
-- [x] A6. `llm-task` has no access to registered tools (tool isolation)
-  - Keep `echo_tool` installed and available in the agent tool list.
-  - Prompt `llm-task` with adversarial input requesting `echo_tool` execution.
-  - Verify `llm-task` returns schema-valid JSON and no `echo_tool` call appears in run/tool history.
-  - Validated with `tools.allow=["echo_tool","typed_echo_tool","llm-task"]`; `llm-task` returned `attemptedToolCall=true` and `toolCalled=false`, and the bundled implementation invokes the embedded agent with `disableTools: true`.
-- [x] A7. Sub-agent orchestration (parent agent coordinates Agent-A → Agent-B)
-  - First inspect `openclaw sessions_spawn`/`subagents` behavior in the current `main` agent config.
-  - Use isolated session ids for Agent-A and Agent-B and verify result handoff through the parent.
-  - Record whether multiple named agents must be configured before production can rely on Capture → Clarify → Organize separation.
-- [ ] A8. Cron scheduler fires on schedule, persists across gateway restart — partially validated, plugin-tool execution blocked
-  - Use `openclaw cron add --every 1m --agent main --message ... --session isolated --tools echo_tool --json`.
-  - Verify `openclaw cron list/status/runs` and `~/.openclaw/cron/jobs.json`.
-  - Restart the gateway and confirm the job survives and fires again.
-  - Clean up the test cron job after validation.
-  - Current finding: scheduler persisted and fired repeatedly, but each run failed with `runtime toolsAllow: echo_tool` because plugin tools were not resolved under the cron runtime allow-list.
-- [ ] A9. Session isolation — concurrent sessions don't share state — blocked by provider quota
-  - Start two `openclaw agent` runs with distinct `--session-id` values and different `echo_tool` inputs.
-  - Verify each session transcript contains only its own input/output.
-  - Confirm no tool result or session state leaks when runs overlap.
-  - Current blocker: concurrent validation runs failed before execution due `openai-codex/gpt-5.5` ChatGPT usage limit/cooldown.
-
-Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin loading, and A3 agent-to-tool invocation results.
-
-### Spike B: Microsoft Graph API (Integration-Critical)
-
-Spike B integration validation is complete. Graph auth, pagination, folder, move, category, throttling, and date-filter behavior are validated.
-
-- [x] B1. Register Azure App with delegated Mail.ReadWrite permission only
-  - Manual setup guide: `docs/microsoft-graph-setup.md`.
-  - Evidence log: `docs/spikes/microsoft-graph.md`.
-- [x] B2. MSAL device code flow authentication
-- [x] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
-- [x] B4. Token refresh — automatic refresh after expiry
-- [x] B5. Fetch emails with structured response (id, subject, sender, body)
-- [x] B6. Fetch full email body (HTML and plain text)
-- [x] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
-- [x] B8. Pagination via `@odata.nextLink`
-- [x] B9. Create mail folder with `@` prefix (e.g., `@Action`)
-- [x] B10. Create nested mail folders
-- [x] B11. List mail folders
-- [x] B12. Move email to a different folder
-- [x] B13. Apply Outlook category to email
-- [x] B14. Rate limiting behavior (429 responses, Retry-After)
-- [x] B15. Filter emails by date and order by receivedDateTime
-
-### Spike C: Dependency Compatibility
-
-Spike C validation is complete. Dependency install policy, hashing, TypeBox validation, sql.js persistence flow, and CLI setup primitives are validated.
-
-- [x] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
-- [x] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime
-- [x] C3. Exact pinned dependency install works under `.npmrc` security policy
-- [x] C4. `@sinclair/typebox` standalone schema validation
-- [x] C5. `commander` + `inquirer` interactive setup flow
-
-### Spike D: End-to-End MVP Flow
-
-- [x] D1. Single email classification: Auth → Fetch → Sanitize → llm-task → Validate
-- [x] D2. Single email organization: Classify → Create folder → Move → Categorize
-- [ ] D3. Agent-orchestrated flow: Natural language → agent → tools → organized email — blocked by OpenClaw runtime tool allow-list still resolving only `echo_tool`, `typed_echo_tool`, `llm-task` in current environment
-- [ ] D4. Cron-triggered flow: Automatic processing with idempotency — blocked by OpenClaw gateway runtime instability (`GatewayTransportError` / gateway not running)
-
+Steps 1, 5, and partial Step 6 are complete. Steps 2-4 form the critical path to end-to-end flow.
 ---
 
 ## Implementation Tasks
