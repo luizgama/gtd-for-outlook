@@ -57,10 +57,10 @@ Produce documented evidence for Graph auth and core mailbox operations, without 
    - Verify owner-only permissions.
    - Restart script and verify silent auth.
 
-4. B4 token refresh - next
+4. B4 token refresh - done
    - Verify refresh path or document a practical forced-expiry method.
 
-5. B5-B8 read path
+5. B5-B8 read path - next
    - Fetch structured messages.
    - Fetch full body.
    - Access `internetMessageHeaders`.

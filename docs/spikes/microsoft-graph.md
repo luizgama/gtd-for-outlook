@@ -118,11 +118,49 @@ Notes:
 
 ## B4. Token Refresh
 
-Status: pending.
+Status: passed.
 
 Acceptance:
 
 - Expired/near-expired access token refreshes without user interaction.
+
+Validation command:
+
+```bash
+node spikes/microsoft-graph/force-refresh.mjs
+```
+
+Evidence:
+
+```text
+Normal silent token:
+- access token returned
+- Mail.ReadWrite scope returned
+
+Forced-refresh silent token:
+- access token returned
+- Mail.ReadWrite scope returned
+- no browser/device-code prompt displayed
+- token fingerprint changed
+- expiry moved later
+- cacheFileMode: 600
+```
+
+Observed non-secret output:
+
+```text
+cachedAccessTokenReturned: true
+refreshedAccessTokenReturned: true
+cachedTokenFingerprint: fbba2385a1e5
+refreshedTokenFingerprint: ddff13a2d70c
+cachedExpiresOn: 2026-05-09T06:09:14.000Z
+refreshedExpiresOn: 2026-05-09T06:32:50.000Z
+```
+
+Notes:
+
+- The spike uses `acquireTokenSilent({ forceRefresh: true })` to force MSAL to redeem the refresh token without waiting for natural expiry.
+- The script prints only short SHA-256 token fingerprints, not token values.
 
 ## B5. Fetch Emails
 

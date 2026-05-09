@@ -65,7 +65,7 @@ Next active spike. Start here before production implementation because Graph aut
   - Evidence log: `docs/spikes/microsoft-graph.md`.
 - [x] B2. MSAL device code flow authentication
 - [x] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
-- [ ] B4. Token refresh — automatic refresh after expiry
+- [x] B4. Token refresh — automatic refresh after expiry
 - [ ] B5. Fetch emails with structured response (id, subject, sender, body)
 - [ ] B6. Fetch full email body (HTML and plain text)
 - [ ] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
