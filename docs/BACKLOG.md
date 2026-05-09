@@ -2,7 +2,7 @@
 
 ## Current Gate
 
-Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete. The next active validation gate is **Spike D: End-to-End MVP Flow**.
+Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete. The next active validation gate is **Spike D: End-to-End MVP Flow**. The immediate implementation phase is to complete **Step 5 (`graph/folders.ts`, `graph/emails.ts`, mocked Graph integration tests)** to unlock D1/D2 execution.
 
 Use the temporary root file `NEXT_PHASE_PLAN.md` as the handoff for the next context.
 
