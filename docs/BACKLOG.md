@@ -2,11 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Steps 2-4 — Security, GTD Logic, Pipeline (Foundation Modules)**
+**Next Phase: Phase E — Close Steps 2-4 Core Path (Security -> GTD -> Pipeline)**
 
-Temporary handoff plans may use the ignored root `NEXT_PHASE_PLAN.md` file when needed. All implementation tasks for this phase should preserve dependency ordering and test-first requirements.
+Implementation order for this phase is strict and test-first:
+1) Security contracts + detector/guardrails, 2) GTD classifier core, 3) pipeline orchestration primitives.
 
-Steps 1, 5, and partial Step 6 are complete. Steps 2-4 form the critical path to end-to-end flow.
+Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
+
+Steps 1 and 5 are complete, and Step 6 has baseline tool wiring. Remaining blockers for end-to-end reliability are concentrated in Steps 2-4.
 ---
 
 ## Implementation Tasks
