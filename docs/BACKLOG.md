@@ -2,7 +2,7 @@
 
 ## Current Gate
 
-Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete. The next active validation gate is **Spike D: End-to-End MVP Flow**. The immediate implementation phase is to complete **Step 5 (`graph/folders.ts`, `graph/emails.ts`, mocked Graph integration tests)** to unlock D1/D2 execution.
+Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete, and Spike D1/D2 are complete. The next active validation gate is **Spike D3/D4: agent-orchestrated and cron-triggered end-to-end flow with idempotency**.
 
 Use the temporary root file `NEXT_PHASE_PLAN.md` as the handoff for the next context.
 
@@ -160,9 +160,9 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 - [x] Implement `graph/auth.ts` — MSAL with persistent private-file token cache
 - [x] Implement `graph/client.ts` — authenticated Graph client with silent token refresh
-- [ ] Implement `graph/folders.ts` — create/list GTD folders
-- [ ] Implement `graph/emails.ts` — fetch, move, categorize emails
-- [ ] Write integration tests with mocked Graph responses
+- [x] Implement `graph/folders.ts` — create/list GTD folders
+- [x] Implement `graph/emails.ts` — fetch, move, categorize emails
+- [x] Write integration tests with mocked Graph responses
 
 ### Step 6: OpenClaw Plugin
 
