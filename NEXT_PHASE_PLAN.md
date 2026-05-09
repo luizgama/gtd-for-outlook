@@ -1,49 +1,61 @@
-# Next Phase Plan (Post-Spike-B Merge on `main`)
+# Next Phase Plan (Post-Spike-B/C Merge on `main`)
 
 Date: 2026-05-09
 
 ## Objective
 
-Close remaining validation blockers, then start production implementation with the lowest-risk vertical slice.
+Start production implementation from validated foundations and reach a testable end-to-end MVP path.
 
 ## Current Status Snapshot
 
 - Spike A: A1-A7 done; A8/A9 still residual blockers.
-- Spike B: B1-B7 and B9-B15 done; **B8 pending**.
-- Spike C: C1-C5 pending, with **C3 required** before production dependency lock.
+- Spike B: complete (B1-B15).
+- Spike C: complete (C1-C5).
+- Step 5 foundation: `src/graph/auth.ts` and `src/graph/client.ts` implemented with unit tests.
+- Current validation gate: Spike D (D1-D4) remains open.
 
 ## Recommended Next Phase
 
-1. **Finish B8 (message pagination)**
-   - Build `spikes/microsoft-graph/messages-pagination.mjs`.
-   - Use `$top=5` and follow `@odata.nextLink` across multiple pages.
-   - Verify no duplicates and no gaps in traversed IDs.
-   - Update `docs/spikes/microsoft-graph.md` and `docs/BACKLOG.md`.
+1. **Complete Step 5 Graph layer**
+   - Implement `src/graph/folders.ts`:
+     - get/list folders
+     - create folder
+     - create nested child folder
+   - Implement `src/graph/emails.ts`:
+     - fetch paginated messages
+     - fetch full body + headers
+     - move message
+     - apply category
+   - Add mocked tests for folders/emails modules (`tests/unit/graph/*.test.ts`).
 
-2. **Execute Spike C immediately after B8**
-   - C3 first: validate pinned dependency install flow under `.npmrc` policy (`ignore-scripts=true`).
-   - C1/C2/C4/C5 in sequence to finalize dependency/runtime confidence.
-   - Record evidence in docs and update backlog checks.
+2. **Build Step 2 security module (tests first)**
+   - Finalize tests for sanitizer/detector/guardrails.
+   - Implement `src/security/sanitizer.ts`, `src/security/detector.ts`, `src/security/guardrails.ts`.
+   - Implement `src/security/schemas.ts` with TypeBox runtime checks for classification output.
 
-3. **Start production code with Step 5 (Graph layer)**
-   - Implement `src/graph/auth.ts` and `src/graph/client.ts` from proven spike behavior.
-   - Add tests/mocks for auth cache behavior and Graph request wrapper contracts.
-   - Then implement `src/graph/folders.ts` and `src/graph/emails.ts` using B9-B15 learnings.
+3. **Build Step 3 GTD logic module (tests first)**
+   - Implement categories, prompts, classifier, and warnings.
+   - Ensure outputs align with validated Graph folder/category behavior (`@Action`, `GTD: Action`).
+
+4. **Open Spike D with minimal vertical slice**
+   - D1: fetch one message -> sanitize -> classify -> validate schema.
+   - D2: organize one message -> folder create/list -> move -> categorize.
+   - Record evidence in docs and backlog.
 
 ## Why this order
 
-- B8 + C3 are the remaining hard gates before production work can be considered stable.
-- Step 5 first turns already-validated Graph spike behavior into reusable app modules.
-- Security/GTD layers can then integrate against stable Graph primitives.
+- Graph auth/client and dependency gates are already resolved.
+- Remaining risk is integration correctness across Graph modules + security + GTD logic.
+- Building Graph folders/emails first keeps Spike D blocked scope small and testable.
 
 ## Definition of Done for This Phase
 
-- B8 marked complete with evidence.
-- C1-C5 marked complete with evidence (or explicit documented blockers + decisions).
-- `src/graph/auth.ts` + `src/graph/client.ts` implemented with tests passing locally.
+- `src/graph/folders.ts` and `src/graph/emails.ts` implemented with passing unit tests.
+- Security and GTD core modules implemented with tests.
+- D1 and D2 executed with evidence updates.
 
 ## Next Context Kickoff Prompt
 
 Use this exact kickoff in the next context:
 
-`Start Phase: implement B8 message pagination validation first, update docs/backlog, then run Spike C tasks C3 -> C1 -> C2 -> C4 -> C5 with evidence updates.`
+`Start Phase: implement graph/folders.ts and graph/emails.ts with unit tests, then complete security + GTD core modules needed for D1/D2 and run D1/D2 validation with evidence updates.`
