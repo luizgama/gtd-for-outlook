@@ -2,7 +2,9 @@
 
 ## Current Gate
 
-Production implementation is blocked until the MVP validation spikes below are completed and their decisions are recorded. The repository is scaffolded; use `docs/EXECUTION_MAP.md` for implementation order after this gate passes.
+Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. The next active gate is **Spike B: Microsoft Graph API**, with **Spike C: Dependency Compatibility** running in parallel where it unblocks local implementation.
+
+Use the temporary root file `NEXT_PHASE_PLAN.md` as the handoff for the next context.
 
 ## Resolved MVP Decisions
 
@@ -56,10 +58,14 @@ Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin lo
 
 ### Spike B: Microsoft Graph API (Integration-Critical)
 
-- [ ] B1. Register Azure App with delegated Mail.ReadWrite permission only
-- [ ] B2. MSAL device code flow authentication
-- [ ] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
-- [ ] B4. Token refresh — automatic refresh after expiry
+Next active spike. Start here before production implementation because Graph auth, token persistence, folder naming, and message mutation are integration-critical.
+
+- [x] B1. Register Azure App with delegated Mail.ReadWrite permission only
+  - Manual setup guide: `docs/microsoft-graph-setup.md`.
+  - Evidence log: `docs/spikes/microsoft-graph.md`.
+- [x] B2. MSAL device code flow authentication
+- [x] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
+- [x] B4. Token refresh — automatic refresh after expiry
 - [ ] B5. Fetch emails with structured response (id, subject, sender, body)
 - [ ] B6. Fetch full email body (HTML and plain text)
 - [ ] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
@@ -73,6 +79,8 @@ Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin lo
 - [ ] B15. Filter emails by date and order by receivedDateTime
 
 ### Spike C: Dependency Compatibility
+
+Run in parallel with Spike B where possible, but do not let C work distract from B1-B5/B9/B12. C3 is required before production dependencies are locked.
 
 - [ ] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
 - [ ] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime

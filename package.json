@@ -28,7 +28,8 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "@azure/msal-node": "5.1.5"
+  },
   "overrides": {}
 }
