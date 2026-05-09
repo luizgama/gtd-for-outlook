@@ -84,11 +84,8 @@ const token = tokenResult?.accessToken;
 if (!token) throw new Error("No access token.");
 
 const action = await getOrCreateActionFolder(token);
-const inboxList = await graph(
-  token,
-  "/me/mailFolders?$top=100&$filter=displayName eq 'Caixa de Entrada'&$select=id,displayName",
-);
-const inboxId = inboxList.value?.[0]?.id;
+const inbox = await graph(token, "/me/mailFolders/inbox?$select=id,displayName");
+const inboxId = inbox.id;
 if (!inboxId) throw new Error("Inbox folder not found.");
 
 const messages = await graph(
