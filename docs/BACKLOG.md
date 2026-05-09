@@ -90,8 +90,8 @@ Spike C validation is complete. Dependency install policy, hashing, TypeBox vali
 
 ### Spike D: End-to-End MVP Flow
 
-- [ ] D1. Single email classification: Auth → Fetch → Sanitize → llm-task → Validate
-- [ ] D2. Single email organization: Classify → Create folder → Move → Categorize
+- [x] D1. Single email classification: Auth → Fetch → Sanitize → llm-task → Validate
+- [x] D2. Single email organization: Classify → Create folder → Move → Categorize
 - [ ] D3. Agent-orchestrated flow: Natural language → agent → tools → organized email
 - [ ] D4. Cron-triggered flow: Automatic processing with idempotency
 
