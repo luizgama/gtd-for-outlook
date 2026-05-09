@@ -1,157 +1,49 @@
-# Next Phase Plan
+# Next Phase Plan (Post-Spike-B Merge on `main`)
 
-Temporary handoff file for the next implementation context.
+Date: 2026-05-09
 
-## Current State
+## Objective
 
-- Branch: `main`
-- Spike A has been merged through A7:
-  - A1-A4: OpenClaw install, plugin loading, agent-to-tool invocation, TypeBox validation.
-  - A5-A6: `llm-task` JSON/schema output and tool isolation validated through direct `tools.invoke`.
-  - A7: parent-to-sub-agent orchestration validated with `sessions_spawn` and `sessions_yield`.
-- Residual Spike A follow-ups:
-  - A8: cron persists and fires, but cron runtime `--tools <plugin-tool>` did not resolve plugin tools.
-  - A9: concurrent session isolation was blocked by model quota/cooldown and needs retry.
-- Production implementation remains blocked until integration and dependency validation are complete.
+Close remaining validation blockers, then start production implementation with the lowest-risk vertical slice.
+
+## Current Status Snapshot
+
+- Spike A: A1-A7 done; A8/A9 still residual blockers.
+- Spike B: B1-B7 and B9-B15 done; **B8 pending**.
+- Spike C: C1-C5 pending, with **C3 required** before production dependency lock.
 
 ## Recommended Next Phase
 
-Start **Spike B: Microsoft Graph API validation**.
+1. **Finish B8 (message pagination)**
+   - Build `spikes/microsoft-graph/messages-pagination.mjs`.
+   - Use `$top=5` and follow `@odata.nextLink` across multiple pages.
+   - Verify no duplicates and no gaps in traversed IDs.
+   - Update `docs/spikes/microsoft-graph.md` and `docs/BACKLOG.md`.
 
-Reasoning:
+2. **Execute Spike C immediately after B8**
+   - C3 first: validate pinned dependency install flow under `.npmrc` policy (`ignore-scripts=true`).
+   - C1/C2/C4/C5 in sequence to finalize dependency/runtime confidence.
+   - Record evidence in docs and update backlog checks.
 
-- The product cannot work without real Microsoft 365 mailbox access.
-- B1-B5 validate the minimum read path: app registration, auth, token cache, token refresh, and message fetch.
-- B9 and B12 are critical product assumptions: GTD folder naming and moving mail.
-- B3 token persistence is mandatory for unattended cron or scheduled processing.
-- B9 can change visible UX and folder constants if `@Action`-style names fail.
+3. **Start production code with Step 5 (Graph layer)**
+   - Implement `src/graph/auth.ts` and `src/graph/client.ts` from proven spike behavior.
+   - Add tests/mocks for auth cache behavior and Graph request wrapper contracts.
+   - Then implement `src/graph/folders.ts` and `src/graph/emails.ts` using B9-B15 learnings.
 
-Run **Spike C: Dependency Compatibility** in parallel only where it helps:
+## Why this order
 
-- C3 should happen before production dependencies are locked.
-- C4 validates standalone TypeBox schemas used by security guardrails and plugin contracts.
-- C1 validates the cache storage choice before pipeline implementation.
+- B8 + C3 are the remaining hard gates before production work can be considered stable.
+- Step 5 first turns already-validated Graph spike behavior into reusable app modules.
+- Security/GTD layers can then integrate against stable Graph primitives.
 
-## Phase Goal
+## Definition of Done for This Phase
 
-Produce documented evidence for Graph auth and core mailbox operations, without writing production Graph modules yet unless a spike script needs a small throwaway harness.
+- B8 marked complete with evidence.
+- C1-C5 marked complete with evidence (or explicit documented blockers + decisions).
+- `src/graph/auth.ts` + `src/graph/client.ts` implemented with tests passing locally.
 
-## Scope
+## Next Context Kickoff Prompt
 
-### Primary Workstream: Spike B
+Use this exact kickoff in the next context:
 
-1. B1 Azure app registration - done
-   - Follow `docs/microsoft-graph-setup.md`.
-   - Record evidence in `docs/spikes/microsoft-graph.md`.
-   - Record tenant/account type.
-   - Confirm delegated `Mail.ReadWrite` only.
-   - Document admin consent requirements.
-
-2. B2 MSAL device code flow - done
-   - Add a throwaway spike script only if needed.
-   - Confirm access token is returned.
-   - Confirm token includes `Mail.ReadWrite`.
-
-3. B3 token cache persistence - done
-   - Persist MSAL cache to a private file.
-   - Verify owner-only permissions.
-   - Restart script and verify silent auth.
-
-4. B4 token refresh - done
-   - Verify refresh path or document a practical forced-expiry method.
-
-5. B5-B8 read path - next
-   - Fetch structured messages.
-   - Fetch full body.
-   - Access `internetMessageHeaders`.
-   - Validate pagination through `@odata.nextLink`.
-
-6. B9-B13 mutation path
-   - Create GTD folder with `@` prefix.
-   - Create nested folder if needed.
-   - List folders.
-   - Move a message.
-   - Apply Outlook category.
-
-7. B14-B15 operational behavior
-   - Observe rate limiting and `Retry-After`.
-   - Validate date filtering and ordering.
-
-### Parallel Workstream: Spike C
-
-Run these only when not blocked on Graph account/browser auth:
-
-1. C3 exact pinned dependency install under `.npmrc`
-   - Decide exact package versions.
-   - Keep `ignore-scripts=true`.
-   - Verify no caret/tilde ranges.
-
-2. C4 TypeBox standalone validation
-   - Validate classification output schema outside OpenClaw.
-   - Confirm extra fields are rejected.
-
-3. C1 `sql.js` cache validation
-   - Confirm it works with scripts disabled.
-   - Persist, reload, and query a small DB.
-
-4. C2 SHA-256 hashing
-   - Confirm deterministic hash output and acceptable runtime.
-
-5. C5 commander/inquirer
-   - Validate interactive and non-interactive setup ergonomics.
-
-## Suggested Files
-
-Use temporary spike files until decisions are recorded:
-
-- `docs/spikes/microsoft-graph.md`
-- `docs/spikes/dependency-compatibility.md`
-- `spikes/microsoft-graph/`
-- `spikes/dependency-compatibility/`
-
-Keep production files untouched unless a spike result requires updating constants or ADRs.
-
-## Backlog Update Rule
-
-When confirming any task is done, update `docs/BACKLOG.md` in the same commit.
-
-Also update:
-
-- `docs/plan.md` for gate or go/no-go changes.
-- `docs/spikes/microsoft-graph.md` for B evidence.
-- `docs/spikes/dependency-compatibility.md` for C evidence.
-
-## Verification Commands
-
-Before committing any spike update:
-
-```bash
-git diff --check
-git status --short
-```
-
-If dependencies are installed:
-
-```bash
-npm run lint
-npm test
-```
-
-## Stop Conditions
-
-Stop and record a blocker instead of guessing if:
-
-- Azure app registration cannot be completed with delegated `Mail.ReadWrite`.
-- MSAL cannot persist and silently reuse token cache.
-- Microsoft rejects the planned GTD folder naming convention.
-- Moving messages or applying categories requires permissions beyond `Mail.ReadWrite`.
-- Dependency validation requires postinstall scripts that violate `.npmrc`.
-
-## Expected End State
-
-At the end of the next phase:
-
-- Spike B has clear pass/fail evidence and decisions.
-- Spike C has at least C3/C4 resolved, preferably C1-C5.
-- `docs/BACKLOG.md` reflects completed B/C tasks.
-- Production implementation can begin only after the remaining MVP validation blockers are understood and accepted.
+`Start Phase: implement B8 message pagination validation first, update docs/backlog, then run Spike C tasks C3 -> C1 -> C2 -> C4 -> C5 with evidence updates.`

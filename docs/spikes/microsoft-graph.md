@@ -260,11 +260,36 @@ Notes:
 
 ## B8. Pagination
 
-Status: pending.
+Status: passed.
 
 Acceptance:
 
 - Follow `@odata.nextLink` across multiple pages.
+
+Validation command:
+
+```bash
+B8_MAX_PAGES=25 node spikes/microsoft-graph/messages-pagination.mjs
+```
+
+Evidence:
+
+```text
+top: 5
+maxPages: 25
+pageCount: 25
+totalMessages: 125
+uniqueCount: 125
+duplicateCount: 0
+multiPageTraversal: true
+traversedAllPages: false (bounded run)
+```
+
+Notes:
+
+- Query used: `GET /me/messages?$top=5&$select=id,subject,receivedDateTime,parentFolderId&$orderby=receivedDateTime desc`
+- The script follows `@odata.nextLink` page by page and verifies duplicate-free aggregation of message IDs.
+- This mailbox is large enough that a bounded run is used for spike validation; bounded traversal still confirms stable pagination behavior over multiple pages without missing/duplicating within the traversed window.
 
 ## B9. Create Mail Folder
 

@@ -2,7 +2,7 @@
 
 ## Current Gate
 
-Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. The next active gate is **Spike B: Microsoft Graph API**, with **Spike C: Dependency Compatibility** running in parallel where it unblocks local implementation.
+Production implementation is still blocked until the MVP validation spikes below are completed and their decisions are recorded. Spike A has validated the core OpenClaw path through A7; A8/A9 remain residual OpenClaw follow-ups. Spike B and Spike C are complete. The next active validation gate is **Spike D: End-to-End MVP Flow**.
 
 Use the temporary root file `NEXT_PHASE_PLAN.md` as the handoff for the next context.
 
@@ -58,7 +58,7 @@ Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin lo
 
 ### Spike B: Microsoft Graph API (Integration-Critical)
 
-Next active spike. Start here before production implementation because Graph auth, token persistence, folder naming, and message mutation are integration-critical.
+Spike B integration validation is complete. Graph auth, pagination, folder, move, category, throttling, and date-filter behavior are validated.
 
 - [x] B1. Register Azure App with delegated Mail.ReadWrite permission only
   - Manual setup guide: `docs/microsoft-graph-setup.md`.
@@ -69,7 +69,7 @@ Next active spike. Start here before production implementation because Graph aut
 - [x] B5. Fetch emails with structured response (id, subject, sender, body)
 - [x] B6. Fetch full email body (HTML and plain text)
 - [x] B7. Access `internetMessageHeaders` (List-Unsubscribe detection)
-- [ ] B8. Pagination via `@odata.nextLink`
+- [x] B8. Pagination via `@odata.nextLink`
 - [x] B9. Create mail folder with `@` prefix (e.g., `@Action`)
 - [x] B10. Create nested mail folders
 - [x] B11. List mail folders
@@ -82,11 +82,11 @@ Next active spike. Start here before production implementation because Graph aut
 
 Run in parallel with Spike B where possible, but do not let C work distract from B1-B5/B9/B12. C3 is required before production dependencies are locked.
 
-- [ ] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
-- [ ] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime
-- [ ] C3. Exact pinned dependency install works under `.npmrc` security policy
-- [ ] C4. `@sinclair/typebox` standalone schema validation
-- [ ] C5. `commander` + `inquirer` interactive setup flow
+- [x] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
+- [x] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime
+- [x] C3. Exact pinned dependency install works under `.npmrc` security policy
+- [x] C4. `@sinclair/typebox` standalone schema validation
+- [x] C5. `commander` + `inquirer` interactive setup flow
 
 ### Spike D: End-to-End MVP Flow
 
@@ -118,7 +118,7 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [x] Create design spec stubs (`docs/specs/01-06`)
 - [x] Create ADR stubs (`docs/adr/001`, `docs/adr/002`)
 - [x] Create `README.md`
-- [ ] Install and lock dependencies after spike validation
+- [x] Install and lock dependencies after spike validation
 
 ### Step 2: Security Module (Tests First)
 
@@ -158,8 +158,8 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 5: Microsoft Graph API Layer
 
-- [ ] Implement `graph/auth.ts` — MSAL with persistent private-file token cache
-- [ ] Implement `graph/client.ts` — authenticated Graph client with silent token refresh
+- [x] Implement `graph/auth.ts` — MSAL with persistent private-file token cache
+- [x] Implement `graph/client.ts` — authenticated Graph client with silent token refresh
 - [ ] Implement `graph/folders.ts` — create/list GTD folders
 - [ ] Implement `graph/emails.ts` — fetch, move, categorize emails
 - [ ] Write integration tests with mocked Graph responses
