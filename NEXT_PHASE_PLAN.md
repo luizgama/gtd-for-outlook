@@ -41,6 +41,8 @@ Produce documented evidence for Graph auth and core mailbox operations, without 
 ### Primary Workstream: Spike B
 
 1. B1 Azure app registration
+   - Follow `docs/microsoft-graph-setup.md`.
+   - Record evidence in `docs/spikes/microsoft-graph.md`.
    - Record tenant/account type.
    - Confirm delegated `Mail.ReadWrite` only.
    - Document admin consent requirements.
