@@ -75,13 +75,46 @@ Notes:
 
 ## B3. Token Cache Persistence
 
-Status: pending.
+Status: passed.
 
 Acceptance:
 
 - MSAL cache persists locally.
 - Token cache file permissions are owner-only.
 - Restarted process can acquire token silently.
+
+Validation command:
+
+```bash
+node spikes/microsoft-graph/auth-cache.mjs
+```
+
+Evidence:
+
+```text
+First run:
+- authMode: device-code
+- cache file written
+- cacheFileMode: 600
+- Mail.ReadWrite scope returned
+
+Second run, fresh process:
+- authMode: silent
+- cacheFileMode: 600
+- Mail.ReadWrite scope returned
+- no browser/device-code prompt displayed
+```
+
+Cache path:
+
+```text
+~/.gtd-outlook/token-cache.json
+```
+
+Notes:
+
+- The spike script does not print access tokens.
+- The token cache file is local user data and must not be committed.
 
 ## B4. Token Refresh
 

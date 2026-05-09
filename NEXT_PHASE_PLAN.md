@@ -52,12 +52,12 @@ Produce documented evidence for Graph auth and core mailbox operations, without 
    - Confirm access token is returned.
    - Confirm token includes `Mail.ReadWrite`.
 
-3. B3 token cache persistence - next
+3. B3 token cache persistence - done
    - Persist MSAL cache to a private file.
    - Verify owner-only permissions.
    - Restart script and verify silent auth.
 
-4. B4 token refresh
+4. B4 token refresh - next
    - Verify refresh path or document a practical forced-expiry method.
 
 5. B5-B8 read path
