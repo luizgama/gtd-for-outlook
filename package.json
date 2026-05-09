@@ -29,7 +29,16 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@azure/msal-node": "5.1.5"
+    "@azure/msal-node": "5.1.5",
+    "@sinclair/typebox": "0.32.35",
+    "commander": "12.1.0",
+    "inquirer": "9.3.7",
+    "sql.js": "1.11.0"
   },
-  "overrides": {}
+  "overrides": {},
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
 }
