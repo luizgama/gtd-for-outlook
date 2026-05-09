@@ -24,16 +24,18 @@ Production implementation is blocked until the MVP validation spikes below are c
   - Run valid invocation via `openclaw agent --agent main ...` and verify `toolSummary.tools` includes `typed_echo_tool`.
   - Run invalid invocations for wrong `count` type and invalid `mode` literal; verify OpenClaw rejects or does not execute the tool.
   - Keep `tools.profile=coding` and `tools.allow=["echo_tool","typed_echo_tool"]` during this check.
-- [ ] A5. `llm-task` returns JSON-only output, validated against schema — blocked
+- [x] A5. `llm-task` returns JSON-only output, validated against schema
   - Enable `plugins.entries.llm-task.enabled=true`.
-  - Allow the optional tool for the test window (`tools.allow` or `tools.alsoAllow` per OpenClaw validation rules; do not set both in the same scope).
+  - Allow the optional tool for the test window using `tools.allow=["echo_tool","typed_echo_tool","llm-task"]`.
   - Use configured `openai-codex/gpt-5.5` instead of a temporary `HOME` so auth profiles are available.
   - Verify normal and adversarial email inputs return only parsed JSON conforming to schema.
-  - Current blocker: the bundled plugin loads and appears in `tools.catalog`, but `tools.invoke` returns `Tool not available: llm-task`; agent-mediated invocation hangs until the outer run timeout.
-- [ ] A6. `llm-task` has no access to registered tools (tool isolation) — blocked by A5
+  - Use direct `openclaw gateway call tools.invoke` rather than agent-mediated invocation for deterministic validation.
+  - Prompt must explicitly require every schema key; otherwise `llm-task` correctly rejects schema-incomplete model JSON.
+- [x] A6. `llm-task` has no access to registered tools (tool isolation)
   - Keep `echo_tool` installed and available in the agent tool list.
   - Prompt `llm-task` with adversarial input requesting `echo_tool` execution.
   - Verify `llm-task` returns schema-valid JSON and no `echo_tool` call appears in run/tool history.
+  - Validated with `tools.allow=["echo_tool","typed_echo_tool","llm-task"]`; `llm-task` returned `attemptedToolCall=true` and `toolCalled=false`, and the bundled implementation invokes the embedded agent with `disableTools: true`.
 - [x] A7. Sub-agent orchestration (parent agent coordinates Agent-A → Agent-B)
   - First inspect `openclaw sessions_spawn`/`subagents` behavior in the current `main` agent config.
   - Use isolated session ids for Agent-A and Agent-B and verify result handoff through the parent.
