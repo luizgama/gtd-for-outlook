@@ -80,7 +80,7 @@ Spike B integration validation is complete. Graph auth, pagination, folder, move
 
 ### Spike C: Dependency Compatibility
 
-Run in parallel with Spike B where possible, but do not let C work distract from B1-B5/B9/B12. C3 is required before production dependencies are locked.
+Spike C validation is complete. Dependency install policy, hashing, TypeBox validation, sql.js persistence flow, and CLI setup primitives are validated.
 
 - [x] C1. `sql.js` with `ignore-scripts=true` — persist, reload, and query cache DB
 - [x] C2. `node:crypto` SHA-256 hashing — deterministic output and acceptable runtime
