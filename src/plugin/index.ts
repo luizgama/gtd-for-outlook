@@ -11,6 +11,38 @@ export type PluginToolDefinition = {
   parameters: Record<string, unknown>;
 };
 
+type PluginApi = {
+  registerTool: (definition: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+    execute: (_toolCallId: string, params: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
+  }) => void;
+};
+
+type PluginEntryOptions = {
+  id: string;
+  name: string;
+  description: string;
+  configSchema?: Record<string, unknown>;
+  register: (api: PluginApi) => void;
+};
+
+function definePluginEntry({ configSchema, ...entry }: PluginEntryOptions) {
+  const resolvedConfigSchema = configSchema ?? {
+    type: "object",
+    additionalProperties: false,
+    properties: {},
+  };
+
+  return {
+    ...entry,
+    get configSchema() {
+      return resolvedConfigSchema;
+    },
+  };
+}
+
 export const GTD_TOOL_DEFINITIONS: PluginToolDefinition[] = [
   {
     name: "gtd_fetch_emails",
@@ -81,18 +113,11 @@ async function createGraphClient(): Promise<GraphClient> {
   });
 }
 
-const pluginEntry = {
+const pluginEntry = definePluginEntry({
   id: "gtd-outlook",
   name: "GTD for Outlook",
   description: "GTD Outlook plugin tools",
-  register(api: {
-    registerTool: (definition: {
-      name: string;
-      description: string;
-      parameters: Record<string, unknown>;
-      execute: (_toolCallId: string, params: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
-    }) => void;
-  }) {
+  register(api) {
     api.registerTool({
       name: "gtd_fetch_emails",
       description: "Fetch unread inbox emails for GTD processing.",
@@ -130,6 +155,6 @@ const pluginEntry = {
       },
     });
   },
-};
+});
 
 export default pluginEntry;

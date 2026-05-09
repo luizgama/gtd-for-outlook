@@ -30,5 +30,8 @@ npm-debug.log*
 # GTD local data (user-specific, not committed)
 .gtd-outlook/
 
+# Temporary handoff plans
+NEXT_PHASE_PLAN.md
+
 # TypeScript incremental
 *.tsbuildinfo
