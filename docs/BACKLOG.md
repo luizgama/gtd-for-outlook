@@ -92,8 +92,8 @@ Spike C validation is complete. Dependency install policy, hashing, TypeBox vali
 
 - [x] D1. Single email classification: Auth → Fetch → Sanitize → llm-task → Validate
 - [x] D2. Single email organization: Classify → Create folder → Move → Categorize
-- [ ] D3. Agent-orchestrated flow: Natural language → agent → tools → organized email
-- [ ] D4. Cron-triggered flow: Automatic processing with idempotency
+- [ ] D3. Agent-orchestrated flow: Natural language → agent → tools → organized email — blocked by OpenClaw runtime tool allow-list still resolving only `echo_tool`, `typed_echo_tool`, `llm-task` in current environment
+- [ ] D4. Cron-triggered flow: Automatic processing with idempotency — blocked by OpenClaw gateway runtime instability (`GatewayTransportError` / gateway not running)
 
 ---
 
@@ -150,7 +150,7 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [ ] Write tests for `pipeline/dedup.ts`
 - [ ] Write tests for `pipeline/limits.ts`
 - [ ] Write tests for `pipeline/batch-processor.ts`
-- [ ] Implement `pipeline/state.ts` — checkpoint persistence
+- [x] Implement `pipeline/state.ts` — checkpoint persistence
 - [ ] Implement `pipeline/triage.ts` — metadata-only fast triage rules
 - [ ] Implement `pipeline/dedup.ts` — content-hash deduplication (SHA-256 + sql.js SQLite)
 - [ ] Implement `pipeline/limits.ts` — execution limits enforcement
@@ -166,11 +166,11 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 6: OpenClaw Plugin
 
-- [ ] Create `src/plugin/manifest.json` OpenClaw plugin manifest
-- [ ] Implement `plugin/index.ts` with `definePluginEntry`
-- [ ] Register `gtd_fetch_emails` tool
-- [ ] Register `gtd_classify_email` tool
-- [ ] Register `gtd_organize_email` tool
+- [x] Create `src/plugin/openclaw.plugin.json` OpenClaw plugin manifest
+- [x] Implement `plugin/index.ts` tool registry surface (repo-side contract + handlers wiring)
+- [x] Register `gtd_fetch_emails` tool
+- [x] Register `gtd_classify_email` tool
+- [x] Register `gtd_organize_email` tool
 - [ ] Register `gtd_weekly_review` tool
 - [ ] Wire tools to Graph API, classification, and volume pipeline
 - [ ] Create `openclaw/AGENTS.md`
