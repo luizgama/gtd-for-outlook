@@ -166,7 +166,7 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 6: OpenClaw Plugin
 
-- [x] Create `src/plugin/manifest.json` OpenClaw plugin manifest
+- [x] Create `src/plugin/openclaw.plugin.json` OpenClaw plugin manifest
 - [x] Implement `plugin/index.ts` tool registry surface (repo-side contract + handlers wiring)
 - [x] Register `gtd_fetch_emails` tool
 - [x] Register `gtd_classify_email` tool

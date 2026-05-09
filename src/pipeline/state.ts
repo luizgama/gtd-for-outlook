@@ -29,8 +29,12 @@ export class ProcessingStateStore {
     if (!raw) {
       return { processed: {} };
     }
-    const parsed = JSON.parse(raw) as Partial<StateFile>;
-    return { processed: parsed.processed ?? {} };
+    try {
+      const parsed = JSON.parse(raw) as Partial<StateFile>;
+      return { processed: parsed.processed ?? {} };
+    } catch {
+      return { processed: {} };
+    }
   }
 
   save(state: StateFile): void {

@@ -16,6 +16,7 @@ describe("plugin/graph-fetch", () => {
 
     const result = await gtdFetchEmails(client, { top: 1 });
     expect(result.emails).toHaveLength(1);
+    expect(requests[0]).toContain("/me/mailFolders/inbox/messages?");
     expect(requests[0]).toContain("%24filter=isRead+eq+false");
   });
 });
