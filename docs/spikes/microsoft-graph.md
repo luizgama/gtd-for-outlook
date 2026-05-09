@@ -11,32 +11,32 @@ Manual setup guide: `docs/microsoft-graph-setup.md`
 Fill this in during Spike B without committing secrets:
 
 ```text
-Date:
-Node.js:
-Account type:
-Tenant value style: tenant-id/common/consumers
-Delegated permissions:
-Consent status:
-Public client flow enabled:
+Date: 2026-05-09
+Node.js: v22.22.2
+Account type: work/school Microsoft 365 account
+Tenant value style: tenant id
+Delegated permissions: Mail.ReadWrite returned in token; User.Read also returned by Microsoft defaults
+Consent status: browser device-code login completed successfully
+Public client flow enabled: yes, inferred from successful device-code flow
 ```
 
 ## B1. Azure App Registration
 
-Status: pending manual setup.
+Status: passed.
 
 Record after setup:
 
 ```text
-Supported account type:
-Delegated Mail.ReadWrite added:
-Mail.Send absent:
-Admin/user consent status:
-Public client flow enabled:
+Supported account type: work/school Microsoft 365 account
+Delegated Mail.ReadWrite added: yes
+Mail.Send absent: yes, per manual setup confirmation and token scopes
+Admin/user consent status: consent/login completed during device-code flow
+Public client flow enabled: yes
 ```
 
 ## B2. MSAL Device Code Flow
 
-Status: pending.
+Status: passed.
 
 Acceptance:
 
@@ -44,6 +44,34 @@ Acceptance:
 - Browser authentication completes.
 - Access token is returned.
 - Token scopes include `Mail.ReadWrite`.
+
+Validation command:
+
+```bash
+node spikes/microsoft-graph/device-code.mjs
+```
+
+Evidence:
+
+```text
+Device code URL: https://login.microsoft.com/device
+Account username: work/school mailbox account
+Tenant id: configured tenant id
+Scopes returned:
+- profile
+- openid
+- email
+- https://graph.microsoft.com/Mail.ReadWrite
+- https://graph.microsoft.com/User.Read
+Access token returned: true
+ID token returned: true
+```
+
+Notes:
+
+- The script redacts the client id and does not print access tokens.
+- `User.Read` is returned by Microsoft defaults; it was not added as an MVP mail permission.
+- The spike uses `@azure/msal-node@5.1.5` instead of the latest `5.2.0` because `5.2.0` was published within the package cooldown window.
 
 ## B3. Token Cache Persistence
 

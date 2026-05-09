@@ -40,19 +40,19 @@ Produce documented evidence for Graph auth and core mailbox operations, without 
 
 ### Primary Workstream: Spike B
 
-1. B1 Azure app registration
+1. B1 Azure app registration - done
    - Follow `docs/microsoft-graph-setup.md`.
    - Record evidence in `docs/spikes/microsoft-graph.md`.
    - Record tenant/account type.
    - Confirm delegated `Mail.ReadWrite` only.
    - Document admin consent requirements.
 
-2. B2 MSAL device code flow
+2. B2 MSAL device code flow - done
    - Add a throwaway spike script only if needed.
    - Confirm access token is returned.
    - Confirm token includes `Mail.ReadWrite`.
 
-3. B3 token cache persistence
+3. B3 token cache persistence - next
    - Persist MSAL cache to a private file.
    - Verify owner-only permissions.
    - Restart script and verify silent auth.

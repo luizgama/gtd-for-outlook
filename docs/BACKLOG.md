@@ -60,10 +60,10 @@ Evidence: see `docs/spikes/openclaw-platform.md` for OpenClaw version, plugin lo
 
 Next active spike. Start here before production implementation because Graph auth, token persistence, folder naming, and message mutation are integration-critical.
 
-- [ ] B1. Register Azure App with delegated Mail.ReadWrite permission only
+- [x] B1. Register Azure App with delegated Mail.ReadWrite permission only
   - Manual setup guide: `docs/microsoft-graph-setup.md`.
   - Evidence log: `docs/spikes/microsoft-graph.md`.
-- [ ] B2. MSAL device code flow authentication
+- [x] B2. MSAL device code flow authentication
 - [ ] B3. Token cache persistence — private 0600 cache file and silent re-auth after restart
 - [ ] B4. Token refresh — automatic refresh after expiry
 - [ ] B5. Fetch emails with structured response (id, subject, sender, body)
