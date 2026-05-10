@@ -2,14 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Phase E — Replace Step 2-4 Placeholders With Tested Core Logic**
+**Next Phase: Phase F — Config, CLI, and Scheduler Runtime Surface**
 
-Implementation order for this phase is strict and test-first:
-1) Security contracts + detector/guardrails, 2) GTD classifier core, 3) pipeline limits/triage/dedup/batch orchestration.
+Implementation order for this phase:
+1) config foundations, 2) CLI command surface, 3) scheduler/runtime-safe validation paths, 4) release-surface doc alignment.
 
 Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
 
-Steps 1 and 5 are complete, Step 6 has baseline tool wiring, and `pipeline/state.ts` is implemented with coverage. Remaining blockers for end-to-end reliability are concentrated in TODO-only Step 2-4 modules and empty Step 2-4 test suites.
+Steps 1-6 core implementation is now test-covered on `main`. Remaining blockers for a usable MVP are config and CLI entry surfaces (`src/config/*`, `src/cli.ts`, `src/index.ts`) and runtime scheduler ergonomics in non-systemd environments.
 ---
 
 ## Implementation Tasks
@@ -37,39 +37,39 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 2: Security Module (Tests First)
 
-- [ ] Replace placeholder fixtures with real normal emails in EN, PT, ES
-- [ ] Replace placeholder fixtures with real injection attempts in EN, PT, ES, multilingual
-- [ ] Replace empty `security/sanitizer.ts` tests with real assertions
-- [ ] Replace empty `security/detector.ts` tests with real assertions
-- [ ] Replace empty `security/guardrails.ts` tests with real assertions
-- [ ] Complete `security/sanitizer.ts` — structural input cleaning with hash/flags contract
-- [ ] Implement `security/detector.ts` — injection detection adapter boundary
-- [ ] Expand `security/schemas.ts` — TypeBox detection/classification schemas
-- [ ] Implement `security/guardrails.ts` — post-classification validation
+- [x] Replace placeholder fixtures with real normal emails in EN, PT, ES
+- [x] Replace placeholder fixtures with real injection attempts in EN, PT, ES, multilingual
+- [x] Replace empty `security/sanitizer.ts` tests with real assertions
+- [x] Replace empty `security/detector.ts` tests with real assertions
+- [x] Replace empty `security/guardrails.ts` tests with real assertions
+- [x] Complete `security/sanitizer.ts` — structural input cleaning with hash/flags contract
+- [x] Implement `security/detector.ts` — injection detection adapter boundary
+- [x] Expand `security/schemas.ts` — TypeBox detection/classification schemas
+- [x] Implement `security/guardrails.ts` — post-classification validation
 
 ### Step 3: GTD Business Logic (Tests First)
 
-- [ ] Replace empty `gtd/categories.ts` tests with real assertions
-- [ ] Replace empty `gtd/classifier.ts` tests with real assertions
-- [ ] Replace empty `gtd/warnings.ts` tests with real assertions
-- [ ] Expand `gtd/categories.ts` — category helpers used by classifier and plugin tools
-- [ ] Implement `gtd/prompts.ts` — multilingual classification prompts with untrusted-content boundaries
-- [ ] Implement `gtd/classifier.ts` — protected single-email classification flow
-- [ ] Implement `gtd/warnings.ts` — high-importance first-time warnings
-- [ ] Implement `gtd/review.ts` — weekly review generator
+- [x] Replace empty `gtd/categories.ts` tests with real assertions
+- [x] Replace empty `gtd/classifier.ts` tests with real assertions
+- [x] Replace empty `gtd/warnings.ts` tests with real assertions
+- [x] Expand `gtd/categories.ts` — category helpers used by classifier and plugin tools
+- [x] Implement `gtd/prompts.ts` — multilingual classification prompts with untrusted-content boundaries
+- [x] Implement `gtd/classifier.ts` — protected single-email classification flow
+- [x] Implement `gtd/warnings.ts` — high-importance first-time warnings
+- [x] Implement `gtd/review.ts` — weekly review generator
 
 ### Step 4: Volume Processing Pipeline (Tests First)
 
 - [x] Write tests for `pipeline/state.ts`
-- [ ] Replace empty `pipeline/triage.ts` tests with real assertions
-- [ ] Replace empty `pipeline/dedup.ts` tests with real assertions
-- [ ] Replace empty `pipeline/limits.ts` tests with real assertions
-- [ ] Replace empty `pipeline/batch-processor.ts` tests with real assertions
+- [x] Replace empty `pipeline/triage.ts` tests with real assertions
+- [x] Replace empty `pipeline/dedup.ts` tests with real assertions
+- [x] Replace empty `pipeline/limits.ts` tests with real assertions
+- [x] Replace empty `pipeline/batch-processor.ts` tests with real assertions
 - [x] Implement `pipeline/state.ts` — checkpoint persistence
-- [ ] Implement `pipeline/triage.ts` — metadata-only fast triage rules
-- [ ] Implement `pipeline/dedup.ts` — content-hash deduplication (SHA-256 + sql.js SQLite)
-- [ ] Implement `pipeline/limits.ts` — execution limits enforcement
-- [ ] Implement `pipeline/batch-processor.ts` — orchestrate paginated processing
+- [x] Implement `pipeline/triage.ts` — metadata-only fast triage rules
+- [x] Implement `pipeline/dedup.ts` — content-hash deduplication (SHA-256 + sql.js SQLite)
+- [x] Implement `pipeline/limits.ts` — execution limits enforcement
+- [x] Implement `pipeline/batch-processor.ts` — orchestrate paginated processing
 
 ### Step 5: Microsoft Graph API Layer
 
@@ -87,8 +87,8 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [x] Register `gtd_fetch_emails` tool
 - [x] Register `gtd_classify_email` tool
 - [x] Register `gtd_organize_email` tool
-- [ ] Register `gtd_weekly_review` tool
-- [ ] Wire tools to Graph API, classification, and volume pipeline
+- [x] Register `gtd_weekly_review` tool
+- [x] Wire tools to Graph API, classification, and volume pipeline
 - [ ] Create `openclaw/AGENTS.md`
 - [ ] Create `openclaw/SOUL.md`
 - [ ] Create `openclaw/TOOLS.md`
@@ -96,14 +96,14 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 7: CLI Interface & Scheduling
 
-- [ ] Implement `cli.ts` with commander commands
-- [ ] Add `process` command with volume flags (`--batch-size`, `--max-emails`, `--max-llm-calls`, `--since`, `--backlog`)
-- [ ] Add `capture`, `clarify`, `organize` individual commands
-- [ ] Add `review` and `dashboard` commands
-- [ ] Add `status` command
+- [x] Implement `cli.ts` with commander commands
+- [x] Add `process` command with volume flags (`--batch-size`, `--max-emails`, `--max-llm-calls`, `--since`, `--backlog`)
+- [x] Add `capture`, `clarify`, `organize` individual commands
+- [x] Add `review` command
+- [x] Add `status` command
 - [ ] Add `cache stats` and `cache clear` commands
-- [ ] Add `schedule` command wrapping OpenClaw cron
-- [ ] Implement `index.ts` entry point
+- [x] Add `schedule` command wrapping OpenClaw cron
+- [x] Implement `index.ts` entry point
 - [ ] Wire CLI to OpenClaw agent invocation
 - [ ] Add interactive setup flow for Azure credentials
 
