@@ -2,14 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Phase G — MVP Closure (OpenClaw Workspace + CLI Completion + Release Readiness)**
+**Next Phase: Phase H — Release Candidate Hardening**
 
 Implementation order for this phase:
-1) close remaining CLI flows, 2) complete OpenClaw workspace docs/skills, 3) finalize release checklist and hardening.
+1) stabilize test reliability, 2) finish release documentation polish, 3) run security/dependency release checks, 4) prepare tag handoff.
 
 Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
 
-Steps 1-7 implementation is now in place on this phase branch, including CLI cache/setup flows, OpenClaw workspace docs/skills, and CLI-to-agent invocation wiring. Remaining blockers are Step 8 release hardening and final release/tagging tasks.
+Core MVP implementation is complete through Step 7. Remaining blockers are Step 8 release hardening tasks and reliability polish for deterministic CI/test execution.
 ---
 
 ## Implementation Tasks
