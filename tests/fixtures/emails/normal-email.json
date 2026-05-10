@@ -1,11 +1,13 @@
 {
-  "_comment": "TODO: Normal business email fixture for testing classification",
   "id": "fixture-normal-001",
-  "subject": "",
-  "sender": { "emailAddress": { "name": "", "address": "" } },
-  "bodyPreview": "",
-  "body": { "contentType": "html", "content": "" },
-  "receivedDateTime": "",
+  "subject": "Project update and next steps",
+  "sender": { "emailAddress": { "name": "Maria Silva", "address": "maria.silva@example.com" } },
+  "bodyPreview": "Please review the latest draft and send feedback by Thursday.",
+  "body": {
+    "contentType": "html",
+    "content": "<p>Hello team,</p><p>Please review the latest draft and send feedback by Thursday.</p><p>Thanks,<br/>Maria</p>"
+  },
+  "receivedDateTime": "2026-05-06T14:15:00Z",
   "isRead": false,
   "hasAttachments": false
 }

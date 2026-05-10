@@ -12,7 +12,9 @@
     "tools": [
       "gtd_fetch_emails",
       "gtd_classify_email",
-      "gtd_organize_email"
+      "gtd_organize_email",
+      "gtd_sanitize_content",
+      "gtd_weekly_review"
     ]
   }
 }
