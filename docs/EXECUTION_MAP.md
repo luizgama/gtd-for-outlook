@@ -7,9 +7,9 @@ This document is the implementation-order companion to `docs/BACKLOG.md`.
 
 The goal is to let an implementing engineer or agent work through the scaffolded codebase without making sequencing or interface decisions ad hoc.
 
-## Current Status After Spike D
+## Current Status After Phase E
 
-The original dependency order still mostly holds, but the source tree is no longer a blank scaffold. Microsoft Graph access, the baseline plugin registry surface, the runtime plugin bridge, and the simple organize/fetch flow have already been exercised. The immediate gap is not Graph access; it is the unimplemented core logic behind Steps 2-4.
+The source tree has moved beyond scaffold status. Security, GTD logic, pipeline primitives, and plugin integration checkpoint work are now implemented with passing tests on `main`. The immediate gap is no longer core logic; it is runtime usability surface (config loading, CLI command shell, and scheduler ergonomics).
 
 Known current state:
 
@@ -18,7 +18,8 @@ Known current state:
 - `src/plugin/index.ts` now uses `definePluginEntry()` style registration, which resolved the D3 missing-tool symptom.
 - `src/plugin/index.js` is a runtime bridge to `dist/plugin/index.js` and must fail with an actionable `npm run build` message when the dist entry is missing.
 - D4 showed that local validation cannot assume systemd is available; cron/gateway checks need sandbox-friendly CLI and health-command paths.
-- Several Step 2-4 files and tests still contain TODO-only placeholders. Empty test files fail Vitest collection, so replacing those placeholders with real tests is part of the next implementation work.
+- Step 2-4 placeholder modules/tests have been replaced and are covered.
+- `src/config/constants.ts`, `src/config/settings.ts`, `src/cli.ts`, and `src/index.ts` remain the primary delivery-surface critical path.
 
 ## Dependency Order
 

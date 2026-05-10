@@ -12,7 +12,7 @@ A CLI tool that organizes your Microsoft 365 mailbox using the **Getting Things 
 
 ## Status
 
-**Pre-implementation** — Project scaffolding complete. MVP validation spikes pending.
+**Active implementation** — core security/GTD/pipeline/plugin modules are implemented and test-covered; CLI/runtime surface is being finalized.
 
 See [docs/BACKLOG.md](docs/BACKLOG.md) for the full task list and [docs/plan.md](docs/plan.md) for the implementation plan.
 
@@ -34,33 +34,27 @@ npm ci
 cp .env.example .env
 # Edit .env with your Azure App ID and Tenant ID
 
-# First-time setup
-gtd-outlook setup
-
 # Process your inbox
 gtd-outlook process
 
 # Set up automatic processing every 30 minutes
-gtd-outlook schedule --interval 30
+gtd-outlook schedule --every 30m
 ```
 
 ## Commands
 
 ```
-gtd-outlook setup                     # Interactive first-time setup
 gtd-outlook process                   # Full GTD pipeline: Capture, Clarify, Organize
 gtd-outlook process --batch-size 100  # Process 100 emails per batch
 gtd-outlook process --max-emails 500  # Cap total emails this run
-gtd-outlook process --since 30d       # Process emails from last 30 days
+gtd-outlook process --since 2026-05-01 # Process emails since a given date
 gtd-outlook process --backlog         # First-time backlog migration
 gtd-outlook capture                   # Only fetch new emails
 gtd-outlook clarify                   # Only classify fetched emails
 gtd-outlook organize                  # Only move classified emails
 gtd-outlook review                    # Generate weekly review
-gtd-outlook dashboard                 # Show current action items
-gtd-outlook status                    # Show connection & folder status
-gtd-outlook cache stats               # Classification cache statistics
-gtd-outlook schedule --interval 30    # Auto-process every 30 minutes
+gtd-outlook status                    # Show gateway/scheduler runtime status
+gtd-outlook schedule --every 30m      # Auto-process every 30 minutes
 ```
 
 ## Architecture
