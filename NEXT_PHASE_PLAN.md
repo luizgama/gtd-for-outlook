@@ -18,7 +18,7 @@ Reach a defensible "production-ready handoff" state in docs and release bookkeep
 
 ## Ordered work plan
 
-1. Canonical Handoff Docs Consolidation
+1. [x] Canonical Handoff Docs Consolidation
    - Integrate runbook and verify references in:
      - `README.md`
      - `docs/RELEASE_HANDOFF_V0.1.0.md`
@@ -26,13 +26,13 @@ Reach a defensible "production-ready handoff" state in docs and release bookkeep
    - Exit criteria:
      - runbook can be followed end-to-end without missing commands or ambiguous prerequisites.
 
-2. Step 8 Closure And Status Alignment
+2. [x] Step 8 Closure And Status Alignment
    - Update `docs/BACKLOG.md` Step 8 checklist with current completion state.
    - Update `docs/EXECUTION_MAP.md`/`README.md` status wording from phase-progress language to release-handoff-complete wording where justified.
    - Exit criteria:
      - no stale in-progress phase wording remains in release-facing docs.
 
-3. Final Validation Snapshot For Release
+3. [x] Final Validation Snapshot For Release
    - Re-run:
      - `npm run build`
      - `npm test`
@@ -41,7 +41,7 @@ Reach a defensible "production-ready handoff" state in docs and release bookkeep
    - Exit criteria:
      - release docs include a current validation snapshot tied to this phase.
 
-4. Tag Operation Readiness
+4. [x] Tag Operation Readiness
    - Confirm release steps for:
      - tagging `v0.1.0`
      - pushing tag
@@ -62,3 +62,10 @@ Starting now, implementation context is reset to:
 - Focus area: production handoff closure and Step 8 completion in `main`.
 - Primary docs: `docs/PRODUCTION_HANDOFF_RUNBOOK.md`, `docs/RELEASE_HANDOFF_V0.1.0.md`, `docs/BACKLOG.md`, and this file.
 - Immediate first action in next coding pass: reconcile Step 8 statuses with existing validation artifacts and close remaining release-facing doc gaps.
+
+## Execution Notes (Completed)
+
+- Canonical runbook references were integrated into `README.md`, `docs/RELEASE_HANDOFF_V0.1.0.md`, and `docs/openclaw-agent-reference.md`.
+- Step 8 checklist and release-facing status wording were aligned for Phase I pre-tag handoff.
+- Validation refresh completed on this branch: `npm run build`, `npm test` (25 files/80 tests), `npm audit` (0 vulnerabilities).
+- Tag-readiness confirmation was added to `docs/RELEASE_HANDOFF_V0.1.0.md`; remaining release action is tag publication.

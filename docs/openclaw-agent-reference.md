@@ -2,6 +2,11 @@
 
 Generic notes for agents implementing or validating OpenClaw plugins, tools, skills, sub-agents, `llm-task`, and cron workflows.
 
+Primary handoff flow for this repository:
+
+- `docs/PRODUCTION_HANDOFF_RUNBOOK.md` for end-to-end install/configure/validate steps.
+- `docs/RELEASE_HANDOFF_V0.1.0.md` for release gate and tag-readiness checklist.
+
 ## Runtime Basics
 
 - Use the real OpenClaw profile for model and auth validation. Temporary `HOME` or isolated profile directories may hide configured auth profiles and produce misleading model-auth failures.

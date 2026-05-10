@@ -2,14 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Phase H — Release Candidate Hardening**
+**Next Phase: Phase I — Production Handoff Closure**
 
 Implementation order for this phase:
-1) stabilize test reliability, 2) finish release documentation polish, 3) run security/dependency release checks, 4) prepare tag handoff.
+1) consolidate canonical handoff docs, 2) align release-facing status/checklists, 3) refresh validation snapshot, 4) complete tag readiness.
 
 Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
 
-Core MVP implementation is complete through Step 7. Remaining blockers are Step 8 release hardening tasks and reliability polish for deterministic CI/test execution.
+Core MVP and release hardening implementation are complete. Repository is in pre-tag handoff state; remaining action is final `v0.1.0` tag publication.
 ---
 
 ## Implementation Tasks
@@ -109,8 +109,8 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 8: Polish & Release
 
-- [ ] Finalize README with setup instructions and architecture diagram
-- [ ] Finalize `docs/FUTURE_FEATURES.md`
+- [x] Finalize README with setup instructions and architecture diagram
+- [x] Finalize `docs/FUTURE_FEATURES.md`
 - [x] Ensure all tests pass (`npm ci && npx vitest run`)
 - [x] Final security review of prompt injection defenses
 - [x] Audit dependency tree (`npm audit`)
