@@ -1,85 +1,76 @@
-# Next Phase Plan (Phase F)
+# Next Phase Plan (Phase G)
 
 Date: 2026-05-09
 Branch baseline: `main`
-Scope: move from implemented core logic to usable product surface (config, CLI, scheduling flow, and release-facing docs).
+Scope: close remaining MVP blockers after core + CLI baseline delivery.
 
 ## Why this phase now
 
-The previously planned core path (security, GTD logic, pipeline primitives, plugin integration checkpoint) is now implemented and test-covered on `main` (`npm test` passes). The remaining high-impact gaps are the user/runtime entry surfaces and operational packaging:
+Core logic, plugin wiring, config foundations, and baseline CLI command surface are implemented and test-covered on `main` (`npm test` passes). Remaining blockers are now concentrated in:
 
-- `src/config/constants.ts` is still TODO
-- `src/config/settings.ts` is still TODO
-- `src/cli.ts` is still TODO
-- `src/index.ts` is still TODO
-
-Without these, the project has strong internals but no production CLI workflow.
+- OpenClaw workspace assets still missing:
+  - `openclaw/AGENTS.md`
+  - `openclaw/SOUL.md`
+  - `openclaw/TOOLS.md`
+  - skill files for GTD phases
+- CLI completion items still open:
+  - `cache stats`
+  - `cache clear`
+  - interactive setup flow for Azure credentials
+  - CLI to OpenClaw agent invocation path
+- Release hardening/documentation closure tasks.
 
 ## Phase goal
 
-Deliver a first usable end-to-end CLI shell that runs against the implemented core modules, with deterministic config loading, execution limits wiring, and scheduler-aware command surfaces that do not assume systemd.
+Deliver an MVP-complete operator surface: usable CLI workflows, complete OpenClaw workspace docs/skills, and release-ready project documentation/checklists.
 
 ## Ordered work plan
 
-1. Config Foundations
-   - Implement:
-     - `src/config/constants.ts`
-     - `src/config/settings.ts`
-   - Include:
-     - defaults for batch/limits/lookback/cache paths
-     - environment + local config merge
-     - required Graph auth validation
+1. CLI Completion Pass
+   - Implement remaining Step 7 commands:
+     - `cache stats`
+     - `cache clear`
+   - Add interactive setup flow for Azure credentials (safe local config bootstrap).
+   - Add/complete command tests for new flows.
    - Exit criteria:
-     - all runtime modules import shared config constants from one place
-     - invalid/missing required settings fail early with actionable messages
+     - all documented CLI commands exist and return deterministic output/error paths
 
-2. CLI Skeleton and Command Surface
-   - Implement:
-     - `src/cli.ts`
-     - `src/index.ts`
-   - Add commands:
-     - `process`, `capture`, `clarify`, `organize`
-     - `review`, `status`
-     - `schedule` (OpenClaw cron wrapper path)
-   - Wire key flags:
-     - `--batch-size`, `--max-emails`, `--max-llm-calls`, `--since`, `--backlog`
+2. OpenClaw Workspace Completion
+   - Create:
+     - `openclaw/AGENTS.md`
+     - `openclaw/SOUL.md`
+     - `openclaw/TOOLS.md`
+   - Add skill files for `capture`, `clarify`, `organize`, `reflect`, `engage`.
+   - Ensure skill instructions align with implemented plugin tools and security posture.
    - Exit criteria:
-     - CLI executes help and command parsing cleanly
-     - commands delegate to existing services/adapters (no business-logic duplication)
+     - Step 6 documentation/skills checklist items can be marked complete
 
-3. Scheduler and Runtime Validation Path
-   - Ensure scheduling/status commands avoid systemd assumptions.
-   - Use OpenClaw-compatible health/status command paths that work in sandbox/container environments.
+3. CLI-to-Agent Invocation Wiring
+   - Wire selected CLI commands to OpenClaw execution path where appropriate.
+   - Keep thin adapters; avoid duplicating business logic.
+   - Preserve sandbox-safe runtime behavior (no systemd assumptions).
    - Exit criteria:
-     - scheduler flows provide clear actionable errors when runtime capabilities are unavailable
+     - invocation path is testable/mocked and fails with actionable errors when runtime is unavailable
 
-4. Plugin/CLI Integration Hardening
-   - Align CLI commands with plugin handlers where appropriate.
-   - Confirm `src/plugin/index.js` dist-bridge behavior remains actionable when unbuilt.
-   - Update/extend tests for CLI and config behavior.
+4. Release Readiness Pass
+   - Update README command/architecture sections to final MVP command set.
+   - Run:
+     - `npm run build`
+     - `npm test`
+   - Perform dependency/security sanity checks per backlog.
    - Exit criteria:
-     - `npm run build` passes
-     - `npm test` passes
-     - CLI smoke commands run without crashing on missing optional runtime dependencies
-
-5. Documentation and Gate Reset
-   - Update:
-     - `docs/BACKLOG.md` current gate to Phase F
-     - `docs/EXECUTION_MAP.md` current status notes
-     - `README.md` command/status sections (if command shape changed)
-   - Exit criteria:
-     - backlog reflects current reality (core done, CLI/config now critical path)
+     - Step 8 checklist can move to final review/release tagging
 
 ## Implementation guardrails
 
-- Keep code paths deterministic and test-first where possible.
-- Keep CLI thin: parse args, load settings, delegate to services.
-- Do not rework core security/pipeline modules unless integration defects require it.
-- Preserve D3 runtime fallback messaging and D4 environment assumptions handling.
+- Prefer additive completion of remaining surfaces over refactoring stable core modules.
+- Keep CLI and OpenClaw adapters thin and explicit.
+- Maintain actionable runtime errors for unavailable OpenClaw/scheduler capabilities.
+- Preserve D3 dist-bridge fallback semantics and security prompt boundaries.
 
 ## New context anchor
 
 Starting now, implementation context is reset to:
-- Focus area: `src/config/*`, `src/cli.ts`, `src/index.ts`, scheduler-facing command wiring
+- Focus area: `src/cli.ts`, `src/index.ts`, `openclaw/*`, and release-facing docs
 - Primary docs: `docs/BACKLOG.md`, `docs/EXECUTION_MAP.md`, this file
-- Immediate first action in the next coding pass: implement config constants/settings, then CLI entry and command skeleton.
+- Immediate first action in next coding pass: implement `cache` command family + setup flow, then complete OpenClaw workspace docs/skills.

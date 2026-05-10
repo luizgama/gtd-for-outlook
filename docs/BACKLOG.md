@@ -2,14 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Phase F — Config, CLI, and Scheduler Runtime Surface**
+**Next Phase: Phase G — MVP Closure (OpenClaw Workspace + CLI Completion + Release Readiness)**
 
 Implementation order for this phase:
-1) config foundations, 2) CLI command surface, 3) scheduler/runtime-safe validation paths, 4) release-surface doc alignment.
+1) close remaining CLI flows, 2) complete OpenClaw workspace docs/skills, 3) finalize release checklist and hardening.
 
 Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
 
-Steps 1-6 core implementation is now test-covered on `main`. Remaining blockers for a usable MVP are config and CLI entry surfaces (`src/config/*`, `src/cli.ts`, `src/index.ts`) and runtime scheduler ergonomics in non-systemd environments.
+Steps 1-6 core implementation is test-covered on `main`, and Phase F config/CLI runtime surface is in place. Remaining blockers are the unresolved Step 6 workspace docs/skills, remaining Step 7 commands (`cache`, setup flow, CLI-to-agent invocation), and Step 8 release hardening tasks.
 ---
 
 ## Implementation Tasks
