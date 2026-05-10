@@ -8,7 +8,7 @@ import {
   DEFAULT_MAX_EMAILS_PER_RUN,
   DEFAULT_MAX_LLM_CALLS_PER_RUN,
 } from "../../../src/config/constants";
-import { loadAppSettings } from "../../../src/config/settings";
+import { loadAppSettings, writeSetupConfig } from "../../../src/config/settings";
 
 describe("config/settings", () => {
   it("loads required graph credentials from env with defaults", () => {
@@ -75,5 +75,21 @@ describe("config/settings", () => {
         },
       }),
     ).toThrow("Invalid config JSON");
+  });
+
+  it("writes setup config with Graph credentials", () => {
+    const dir = mkdtempSync(join(tmpdir(), "gtd-config-"));
+    const path = join(dir, "config.json");
+    const writtenPath = writeSetupConfig(
+      {
+        graphClientId: "abc",
+        graphTenantId: "def",
+      },
+      { configPath: path },
+    );
+    expect(writtenPath).toBe(path);
+    const loaded = loadAppSettings({ configPath: path, env: {} });
+    expect(loaded.graphClientId).toBe("abc");
+    expect(loaded.graphTenantId).toBe("def");
   });
 });

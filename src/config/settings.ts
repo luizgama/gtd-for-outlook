@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import {
   APP_HOME_DIR,
   DEFAULT_AUTO_APPROVE_HIGH_IMPORTANCE,
@@ -12,13 +13,19 @@ import {
 } from "./constants.js";
 
 type FsOps = {
+  chmodSync: typeof chmodSync;
   existsSync: typeof existsSync;
+  mkdirSync: typeof mkdirSync;
   readFileSync: typeof readFileSync;
+  writeFileSync: typeof writeFileSync;
 };
 
 const defaultFsOps: FsOps = {
+  chmodSync,
   existsSync,
+  mkdirSync,
   readFileSync,
+  writeFileSync,
 };
 
 export interface AppSettings {
@@ -32,6 +39,11 @@ export interface AppSettings {
   stateFilePath: string;
   classificationCachePath: string;
   autoApproveHighImportance: boolean;
+}
+
+export interface SetupConfigInput {
+  graphClientId: string;
+  graphTenantId: string;
 }
 
 type PartialConfig = Partial<AppSettings> & {
@@ -146,4 +158,24 @@ export function loadAppSettings(
     classificationCachePath: merged.classificationCachePath ?? DEFAULT_CLASSIFICATION_CACHE_PATH,
     autoApproveHighImportance: merged.autoApproveHighImportance ?? DEFAULT_AUTO_APPROVE_HIGH_IMPORTANCE,
   };
+}
+
+export function writeSetupConfig(
+  input: SetupConfigInput,
+  options: {
+    configPath?: string;
+    fsOps?: FsOps;
+  } = {},
+): string {
+  const configPath = options.configPath ?? DEFAULT_CONFIG_PATH;
+  const fsOps = options.fsOps ?? defaultFsOps;
+  const payload = {
+    graphClientId: input.graphClientId.trim(),
+    graphTenantId: input.graphTenantId.trim(),
+  };
+
+  fsOps.mkdirSync(dirname(configPath), { recursive: true, mode: 0o700 });
+  fsOps.writeFileSync(configPath, `${JSON.stringify(payload, null, 2)}\n`, { mode: 0o600 });
+  fsOps.chmodSync(configPath, 0o600);
+  return configPath;
 }

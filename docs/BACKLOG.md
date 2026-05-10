@@ -9,7 +9,7 @@ Implementation order for this phase:
 
 Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
 
-Steps 1-6 core implementation is test-covered on `main`, and Phase F config/CLI runtime surface is in place. Remaining blockers are the unresolved Step 6 workspace docs/skills, remaining Step 7 commands (`cache`, setup flow, CLI-to-agent invocation), and Step 8 release hardening tasks.
+Steps 1-7 implementation is now in place on this phase branch, including CLI cache/setup flows, OpenClaw workspace docs/skills, and CLI-to-agent invocation wiring. Remaining blockers are Step 8 release hardening and final release/tagging tasks.
 ---
 
 ## Implementation Tasks
@@ -89,10 +89,10 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [x] Register `gtd_organize_email` tool
 - [x] Register `gtd_weekly_review` tool
 - [x] Wire tools to Graph API, classification, and volume pipeline
-- [ ] Create `openclaw/AGENTS.md`
-- [ ] Create `openclaw/SOUL.md`
-- [ ] Create `openclaw/TOOLS.md`
-- [ ] Create skill files for each GTD phase
+- [x] Create `openclaw/AGENTS.md`
+- [x] Create `openclaw/SOUL.md`
+- [x] Create `openclaw/TOOLS.md`
+- [x] Create skill files for each GTD phase
 
 ### Step 7: CLI Interface & Scheduling
 
@@ -101,11 +101,11 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [x] Add `capture`, `clarify`, `organize` individual commands
 - [x] Add `review` command
 - [x] Add `status` command
-- [ ] Add `cache stats` and `cache clear` commands
+- [x] Add `cache stats` and `cache clear` commands
 - [x] Add `schedule` command wrapping OpenClaw cron
 - [x] Implement `index.ts` entry point
-- [ ] Wire CLI to OpenClaw agent invocation
-- [ ] Add interactive setup flow for Azure credentials
+- [x] Wire CLI to OpenClaw agent invocation
+- [x] Add interactive setup flow for Azure credentials
 
 ### Step 8: Polish & Release
 

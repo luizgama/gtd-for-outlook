@@ -31,8 +31,7 @@ cd gtd-for-outlook
 npm ci
 
 # Configure Azure credentials
-cp .env.example .env
-# Edit .env with your Azure App ID and Tenant ID
+gtd-outlook setup
 
 # Process your inbox
 gtd-outlook process
@@ -45,6 +44,7 @@ gtd-outlook schedule --every 30m
 
 ```
 gtd-outlook process                   # Full GTD pipeline: Capture, Clarify, Organize
+gtd-outlook process --agent           # Route process run through OpenClaw agent runtime
 gtd-outlook process --batch-size 100  # Process 100 emails per batch
 gtd-outlook process --max-emails 500  # Cap total emails this run
 gtd-outlook process --since 2026-05-01 # Process emails since a given date
@@ -53,6 +53,8 @@ gtd-outlook capture                   # Only fetch new emails
 gtd-outlook clarify                   # Only classify fetched emails
 gtd-outlook organize                  # Only move classified emails
 gtd-outlook review                    # Generate weekly review
+gtd-outlook cache stats               # Show local cache file metrics
+gtd-outlook cache clear               # Clear local classification cache file
 gtd-outlook status                    # Show gateway/scheduler runtime status
 gtd-outlook schedule --every 30m      # Auto-process every 30 minutes
 ```
