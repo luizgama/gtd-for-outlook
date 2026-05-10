@@ -80,6 +80,11 @@ Email content is treated as **untrusted input** that may contain prompt injectio
 
 See [docs/specs/06-prompt-injection.md](docs/specs/06-prompt-injection.md) for details.
 
+## LLM Model Note
+
+This codebase keeps classifier/detector integrations model-agnostic at the code level (dependency-invoked boundaries with mocked tests).  
+For production runtime, this phase targets `gpt-5` through the OpenClaw `llm-task` boundary.
+
 ## OpenClaw inside Docker Sandbox
 
 Docker Sandboxes run AI coding agents in isolated microVM sandboxes. Each sandbox gets its own Docker daemon, filesystem, and network — the agent can build containers, install packages, and modify files without touching your host system.
