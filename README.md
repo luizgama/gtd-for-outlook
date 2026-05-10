@@ -12,7 +12,7 @@ A CLI tool that organizes your Microsoft 365 mailbox using the **Getting Things 
 
 ## Status
 
-**Active implementation** — core security/GTD/pipeline/plugin modules are implemented and test-covered; CLI/runtime surface is being finalized.
+**Release-candidate hardening (Phase H)** — core security/GTD/pipeline/plugin/CLI modules are implemented and test-covered; current work is reliability and release finalization.
 
 See [docs/BACKLOG.md](docs/BACKLOG.md) for the full task list and [docs/plan.md](docs/plan.md) for the implementation plan.
 

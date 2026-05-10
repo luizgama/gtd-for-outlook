@@ -111,9 +111,9 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 - [ ] Finalize README with setup instructions and architecture diagram
 - [ ] Finalize `docs/FUTURE_FEATURES.md`
-- [ ] Ensure all tests pass (`npm ci && npx vitest run`)
-- [ ] Final security review of prompt injection defenses
-- [ ] Audit dependency tree (`npm audit`)
+- [x] Ensure all tests pass (`npm ci && npx vitest run`)
+- [x] Final security review of prompt injection defenses
+- [x] Audit dependency tree (`npm audit`)
 - [ ] Tag v0.1.0 release
 
 ---

@@ -7,9 +7,9 @@ This document is the implementation-order companion to `docs/BACKLOG.md`.
 
 The goal is to let an implementing engineer or agent work through the scaffolded codebase without making sequencing or interface decisions ad hoc.
 
-## Current Status After Phase G
+## Current Status During Phase H
 
-The source tree has moved beyond scaffold status. Security, GTD logic, pipeline primitives, plugin integration checkpoint, and baseline CLI/config/runtime wiring are implemented with passing tests.
+The source tree has moved beyond scaffold status. Security, GTD logic, pipeline primitives, plugin integration checkpoint, and baseline CLI/config/runtime wiring are implemented with passing tests. Phase H is focused on release-candidate hardening and deterministic reliability.
 
 Known current state:
 
@@ -20,7 +20,7 @@ Known current state:
 - D4 showed that local validation cannot assume systemd is available; cron/gateway checks need sandbox-friendly CLI and health-command paths.
 - Step 2-4 placeholder modules/tests have been replaced and are covered.
 - OpenClaw workspace docs/skills are now populated and aligned to registered tool behavior.
-- Remaining critical path is release hardening/documentation finalization and release tagging.
+- Remaining critical path is Step 8 hardening/documentation finalization, release checks, and release tagging.
 
 ## Dependency Order
 

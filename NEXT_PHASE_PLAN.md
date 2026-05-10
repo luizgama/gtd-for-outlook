@@ -18,13 +18,13 @@ Produce a release candidate (`v0.1.0-rc`) quality state: stable tests, finalized
 
 ## Ordered work plan
 
-1. Test Reliability Stabilization
+1. [x] Test Reliability Stabilization
    - Investigate and fix timeout/nondeterminism in `tests/unit/pipeline/state.test.ts` and nearby filesystem-sensitive tests.
    - Add deterministic test guards (timeouts/isolation) only where justified.
    - Exit criteria:
      - repeated `npm test` runs are stable in local and sandbox environments.
 
-2. Release Documentation Finalization
+2. [x] Release Documentation Finalization
    - Finalize `README.md` setup/commands/architecture sections for operator use.
    - Cross-check docs consistency:
      - `docs/BACKLOG.md`
@@ -33,7 +33,7 @@ Produce a release candidate (`v0.1.0-rc`) quality state: stable tests, finalized
    - Exit criteria:
      - no stale phase or TODO references for completed workstreams.
 
-3. Security + Dependency Release Checks
+3. [x] Security + Dependency Release Checks
    - Run build/test and dependency checks:
      - `npm run build`
      - `npm test`
@@ -42,7 +42,7 @@ Produce a release candidate (`v0.1.0-rc`) quality state: stable tests, finalized
    - Exit criteria:
      - all checks pass or blockers are explicitly documented with remediation path.
 
-4. Release Tag Handoff Prep
+4. [x] Release Tag Handoff Prep
    - Update Step 8 backlog status based on completed checks.
    - Prepare release notes summary and tag handoff checklist for `v0.1.0`.
    - Exit criteria:
@@ -61,3 +61,10 @@ Starting now, implementation context is reset to:
 - Focus area: test reliability (`tests/unit/pipeline/*`), Step 8 release docs/checks, and release handoff notes.
 - Primary docs: `docs/BACKLOG.md`, `docs/EXECUTION_MAP.md`, this file.
 - Immediate first action in next coding pass: reproduce and fix flaky timeout behavior, then execute full release checklist.
+
+## Execution Notes (Completed)
+
+- Test hardening applied to `tests/unit/pipeline/state.test.ts` for deterministic temp-dir cleanup and scoped timeout.
+- Documentation status aligned for Phase H in `README.md` and `docs/EXECUTION_MAP.md`.
+- Release checks run successfully after upgrading `inquirer` to `9.3.8` to clear audit findings.
+- Release handoff artifact created at `docs/RELEASE_HANDOFF_V0.1.0.md`.
