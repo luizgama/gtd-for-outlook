@@ -1,14 +1,25 @@
 # Release Handoff: v0.1.0
 
-Date: 2026-05-10
-Phase: H (Release Candidate Hardening)
+Date: 2026-05-09
+Phase: I (Production Handoff Closure)
 
 ## Readiness Summary
+
+Canonical operator procedure:
+
+- `docs/PRODUCTION_HANDOFF_RUNBOOK.md` (install, configure, execute, validate)
+- `docs/openclaw-agent-reference.md` (runtime/plugin/tool policy troubleshooting)
 
 - Build: passing (`npm run build`)
 - Tests: passing (`npm test`) — 25 files, 80 tests
 - Dependency audit: passing (`npm audit`) — 0 vulnerabilities
 - Reliability hardening: `tests/unit/pipeline/state.test.ts` now has explicit temp-dir cleanup and scoped timeout guard for the previously flaky case
+
+## Validation Snapshot (Phase I Refresh, 2026-05-09)
+
+- Build: passing (`npm run build`)
+- Tests: passing (`npm test`) — 25 files, 80 tests
+- Audit: passing (`npm audit`) — 0 vulnerabilities
 
 ## Included Hardening Changes
 
@@ -33,6 +44,14 @@ Phase: H (Release Candidate Hardening)
    - `git tag v0.1.0`
    - `git push origin v0.1.0`
 5. Publish release notes using this file as baseline.
+
+## Tag Readiness Confirmation (Phase I)
+
+- Release-blocking checklist items are closed except tag execution itself.
+- Recommended tag source branch: `main` after a final pull/rebase and clean working tree check.
+- Post-tag action required: publish release notes referencing:
+  - `docs/PRODUCTION_HANDOFF_RUNBOOK.md`
+  - this release handoff document
 
 ## LLM Model Note
 

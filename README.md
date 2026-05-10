@@ -12,9 +12,17 @@ A CLI tool that organizes your Microsoft 365 mailbox using the **Getting Things 
 
 ## Status
 
-**Release-candidate hardening (Phase H)** — core security/GTD/pipeline/plugin/CLI modules are implemented and test-covered; current work is reliability and release finalization.
+**Production handoff ready (pre-tag)** — core security/GTD/pipeline/plugin/CLI modules are implemented and test-covered, with release validation and operator runbooks prepared. Remaining release action is final tag publication.
 
 See [docs/BACKLOG.md](docs/BACKLOG.md) for the full task list and [docs/plan.md](docs/plan.md) for the implementation plan.
+
+## Production Handoff
+
+For production installation, OpenClaw setup, and real inbox validation, use:
+
+- [docs/PRODUCTION_HANDOFF_RUNBOOK.md](docs/PRODUCTION_HANDOFF_RUNBOOK.md)
+- [docs/RELEASE_HANDOFF_V0.1.0.md](docs/RELEASE_HANDOFF_V0.1.0.md)
+- [docs/openclaw-agent-reference.md](docs/openclaw-agent-reference.md)
 
 ## Prerequisites
 
@@ -62,6 +70,16 @@ gtd-outlook schedule --every 30m      # Auto-process every 30 minutes
 ## Architecture
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/plan.md](docs/plan.md) for detailed architecture documentation.
+
+```mermaid
+flowchart TD
+  CLI[gtd-outlook CLI] --> OC[OpenClaw Gateway + Agent Runtime]
+  OC --> PL[GTD Plugin Tools]
+  PL --> GTD[GTD Classifier/Pipeline]
+  GTD --> SEC[Sanitizer + Detector + Guardrails]
+  PL --> GRAPH[Microsoft Graph API Layer]
+  GRAPH --> M365[Microsoft 365 Mailbox]
+```
 
 ## Security
 
