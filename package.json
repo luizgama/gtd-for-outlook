@@ -32,7 +32,7 @@
     "@azure/msal-node": "5.1.5",
     "@sinclair/typebox": "0.32.35",
     "commander": "12.1.0",
-    "inquirer": "9.3.7",
+    "inquirer": "9.3.8",
     "sql.js": "1.11.0"
   },
   "overrides": {},
