@@ -7,25 +7,39 @@ This document is the implementation-order companion to `docs/BACKLOG.md`.
 
 The goal is to let an implementing engineer or agent work through the scaffolded codebase without making sequencing or interface decisions ad hoc.
 
+## Current Status After Spike D
+
+The original dependency order still mostly holds, but the source tree is no longer a blank scaffold. Microsoft Graph access, the baseline plugin registry surface, the runtime plugin bridge, and the simple organize/fetch flow have already been exercised. The immediate gap is not Graph access; it is the unimplemented core logic behind Steps 2-4.
+
+Known current state:
+
+- Graph modules and plugin fetch/classify/organize wrappers have passing coverage.
+- `src/pipeline/state.ts` has a working state store and passing coverage.
+- `src/plugin/index.ts` now uses `definePluginEntry()` style registration, which resolved the D3 missing-tool symptom.
+- `src/plugin/index.js` is a runtime bridge to `dist/plugin/index.js` and must fail with an actionable `npm run build` message when the dist entry is missing.
+- D4 showed that local validation cannot assume systemd is available; cron/gateway checks need sandbox-friendly CLI and health-command paths.
+- Several Step 2-4 files and tests still contain TODO-only placeholders. Empty test files fail Vitest collection, so replacing those placeholders with real tests is part of the next implementation work.
+
 ## Dependency Order
 
-The current source tree is aligned with `docs/plan.md`, but the modules are mostly placeholders. Implementation should proceed in this order:
+Implementation should now proceed in this revised order:
 
-1. Foundations
-2. Pure security and GTD logic
-3. Pipeline primitives
-4. Microsoft Graph integration
-5. Classification orchestration
-6. Batch processing and plugin tools
-7. CLI and review flow
+1. Stabilized foundations and schemas
+2. Pure security logic
+3. GTD category, warning, prompt, and classifier logic
+4. Pipeline limits, triage, dedup, and batch orchestration
+5. Plugin integration against the completed core
+6. CLI, scheduling, and review flow
+7. Final hardening and release
 
 This order is intentional:
 
-- Start with internal types, schemas, constants, and config so later modules share stable contracts.
+- Refresh internal types, schemas, constants, and config before implementing logic that depends on them.
 - Implement deterministic local logic before external integrations.
 - Keep OpenClaw plugin wiring and CLI wiring thin by building them on top of already-tested services.
+- Treat Graph as an already-available boundary for this phase; do not rework it unless the new core interfaces require a narrow adapter change.
 
-## Phase 1: Foundations
+## Phase 1: Stabilized Foundations
 
 Objective: lock the core data model, configuration shape, and schema contracts used everywhere else.
 
@@ -38,7 +52,7 @@ Files:
 
 Prerequisites:
 
-- None beyond the existing scaffold.
+- Existing Graph and plugin contracts should continue to compile.
 
 First concrete interfaces:
 
@@ -91,30 +105,34 @@ export interface ClassificationResult {
 
 Implementation notes:
 
-- `constants.ts` should define default numeric limits, default folder names, and default local storage locations.
-- `categories.ts` should hold the canonical GTD unions and helpers that other modules import instead of redefining strings.
-- `schemas.ts` should expose TypeBox schemas and matching static types for injection detection and classification results.
-- `settings.ts` should read from environment variables and local config, apply defaults, and fail early on missing required Graph auth values.
+- `constants.ts` currently remains a TODO and should define default numeric limits, default folder names, and default local storage locations.
+- `categories.ts` already exposes folder/category names; expand it only as needed for classifier and warnings tests.
+- `schemas.ts` has a minimal classification schema; extend it before classifier/guardrail implementation so validation is shared.
+- `settings.ts` remains a TODO; implement it before CLI and batch processing need runtime config.
 
 Exit criteria:
 
 - Every later module can import shared types and defaults from one place.
 - The schema layer is stable enough for tests and tool contracts.
 
-## Phase 2: Pure Security and GTD Logic
+## Phase 2: Pure Security Logic
 
-Objective: implement deterministic behavior that does not require Graph or OpenClaw.
+Objective: replace TODO-only security modules and empty security tests with deterministic behavior that does not require Graph or OpenClaw.
 
 Files:
 
 - `src/security/sanitizer.ts`
+- `src/security/detector.ts`
 - `src/security/guardrails.ts`
-- `src/gtd/prompts.ts`
-- `src/gtd/warnings.ts`
+- `src/security/schemas.ts`
+- `tests/unit/security/sanitizer.test.ts`
+- `tests/unit/security/detector.test.ts`
+- `tests/unit/security/guardrails.test.ts`
 
 Prerequisites:
 
-- Phase 1 types and schemas.
+- Phase 1 schemas.
+- Real fixture content in `tests/fixtures/emails/*.json` for normal and injection cases.
 
 First concrete interfaces:
 
@@ -141,7 +159,43 @@ export interface GuardrailDecision {
 export function validateClassification(
   context: GuardrailContext,
 ): GuardrailDecision;
+```
 
+Implementation notes:
+
+- `sanitizer.ts` should perform the structural cleaning described in `docs/plan.md`, not semantic threat detection.
+- Preserve the existing simple sanitizer behavior only if it is covered and compatible with the richer `SanitizedEmailContent` contract.
+- `detector.ts` should define the adapter boundary for injection detection. Unit tests should mock the model call and verify multilingual prompt-injection handling.
+- `guardrails.ts` should reject invalid categories, invalid confidence ranges, obvious echoed-content failures, and detector/classifier contradictions.
+
+Exit criteria:
+
+- The security-critical pure logic is testable without any external service.
+- Classification inputs and outputs are stable enough for orchestration.
+- Empty security test files have been replaced with real suites.
+
+## Phase 3: GTD Logic
+
+Objective: implement category helpers, prompts, warnings, and the single-email classifier on top of the security layer.
+
+Files:
+
+- `src/gtd/categories.ts`
+- `src/gtd/prompts.ts`
+- `src/gtd/warnings.ts`
+- `src/gtd/classifier.ts`
+- `tests/unit/gtd/categories.test.ts`
+- `tests/unit/gtd/warnings.test.ts`
+- `tests/unit/gtd/classifier.test.ts`
+
+Prerequisites:
+
+- Phase 1 categories/schemas.
+- Phase 2 sanitizer, detector boundary, and guardrails.
+
+First concrete interfaces:
+
+```ts
 export function buildInjectionDetectionPrompt(): string;
 export function buildClassificationPrompt(): string;
 
@@ -155,21 +209,43 @@ export function shouldWarnForHighImportanceAction(
   autoApprove: boolean,
   state: HighImportanceWarningState,
 ): boolean;
+
+export interface InjectionDetector {
+  detect(content: string): Promise<InjectionDetectionResult>;
+}
+
+export interface ClassifierDependencies {
+  detector: InjectionDetector;
+}
+
+export interface ClassifyEmailInput {
+  id: string;
+  subject: string;
+  sender: string;
+  body: string;
+  receivedAt?: string;
+  headers?: Record<string, string>;
+}
+
+export function classifyEmail(
+  input: ClassifyEmailInput,
+  dependencies: ClassifierDependencies,
+): Promise<ClassificationResult>;
 ```
 
 Implementation notes:
 
-- `sanitizer.ts` should perform the structural cleaning described in `docs/plan.md`, not semantic threat detection.
-- `guardrails.ts` should reject invalid categories, invalid confidence ranges, obvious echoed-content failures, and detector/classifier contradictions.
-- `prompts.ts` should return stable prompt builders with XML boundaries and “untrusted content” framing.
+- `prompts.ts` should return stable prompt builders with XML boundaries and untrusted-content framing.
 - `warnings.ts` should contain only warning decision logic; user interaction belongs later in CLI/plugin layers.
+- `classifier.ts` should orchestrate sanitization, detection, classification prompt construction, schema validation, and guardrails. Keep OpenClaw-specific invocation details outside the classifier.
+- Add dedup and metadata triage once Phase 4 primitives exist; do not block the first classifier unit tests on those modules.
 
 Exit criteria:
 
-- The security-critical pure logic is testable without any external service.
-- Classification inputs and outputs are stable enough for orchestration.
+- A single email can be classified through the protected local flow using mocked model/detector dependencies.
+- Empty GTD test files have been replaced with real suites.
 
-## Phase 3: Pipeline Primitives
+## Phase 4: Pipeline Primitives and Batch Shell
 
 Objective: implement local state, run controls, fast triage, and dedup primitives before wiring external APIs.
 
@@ -179,10 +255,18 @@ Files:
 - `src/pipeline/state.ts`
 - `src/pipeline/triage.ts`
 - `src/pipeline/dedup.ts`
+- `src/pipeline/batch-processor.ts`
+- `tests/unit/pipeline/limits.test.ts`
+- `tests/unit/pipeline/state.test.ts`
+- `tests/unit/pipeline/triage.test.ts`
+- `tests/unit/pipeline/dedup.test.ts`
+- `tests/unit/pipeline/batch-processor.test.ts`
 
 Prerequisites:
 
-- Phase 1 and Phase 2 interfaces.
+- Phase 2 security interfaces.
+- Phase 3 classifier interface.
+- Existing `ProcessingStateStore` behavior should remain backward-compatible with plugin organize tests.
 
 First concrete interfaces:
 
@@ -252,143 +336,33 @@ export function storeCachedClassification(
 Implementation notes:
 
 - `limits.ts` should be a pure budget checker, not a CLI parser.
-- `state.ts` should make resume/idempotency easy and should tolerate a missing state file on first run.
+- `state.ts` already provides message-level processed state; extend deliberately for checkpoint/resume needs rather than replacing the API used by `gtd_organize_email`.
 - `triage.ts` should apply only clear metadata rules described in `docs/plan.md`.
-- `dedup.ts` should hide `node:crypto` SHA-256 hashing and `sql.js` cache-storage details behind a small API so classifier code stays simple.
+- `dedup.ts` should hide hashing and `sql.js` cache-storage details behind a small API so classifier code stays simple. Prefer SHA-256 unless the dependency set is intentionally changed.
+- `batch-processor.ts` should coordinate bounded resumable runs after limits, triage, dedup, and classifier contracts are real.
 
 Exit criteria:
 
 - The project can decide whether an email should be skipped, classified, or resumed without touching Graph or OpenClaw.
+- Empty pipeline test files have been replaced with real suites.
 
-## Phase 4: Microsoft Graph Integration
+## Phase 5: Plugin Integration Checkpoint
 
-Objective: implement mailbox access on stable internal DTOs rather than leaking Graph SDK shapes across the app.
-
-Files:
-
-- `src/graph/auth.ts`
-- `src/graph/client.ts`
-- `src/graph/folders.ts`
-- `src/graph/emails.ts`
-
-Prerequisites:
-
-- Phase 1 settings contracts.
-- Phase 3 metadata and state concepts.
-
-First concrete interfaces:
-
-```ts
-export interface GraphTokenProvider {
-  getAccessToken(): Promise<string>;
-}
-
-export function createGraphTokenProvider(
-  settings: AppSettings,
-): Promise<GraphTokenProvider>;
-
-export interface OutlookEmail {
-  id: string;
-  subject: string;
-  sender: string;
-  bodyPreview: string;
-  body: string;
-  receivedAt: string;
-  hasAttachments: boolean;
-  headers?: Record<string, string>;
-}
-
-export interface FetchEmailsOptions {
-  limit: number;
-  since?: string;
-  folder?: string;
-}
-
-export interface GraphMailClient {
-  fetchUnreadEmails(options: FetchEmailsOptions): Promise<OutlookEmail[]>;
-  moveEmail(emailId: string, destinationFolderId: string): Promise<void>;
-  applyCategories(emailId: string, categories: string[]): Promise<void>;
-  ensureFolder(name: string): Promise<{ id: string; name: string }>;
-}
-```
-
-Implementation notes:
-
-- `auth.ts` should own device-code bootstrap, token persistence, and silent refresh.
-- `client.ts` should own authenticated client creation and HTTP retry behavior for rate limiting.
-- `folders.ts` and `emails.ts` should convert Graph responses into internal DTOs immediately.
-- Do not let the rest of the codebase depend directly on SDK response shapes.
-
-Exit criteria:
-
-- The rest of the app can fetch, move, and categorize mail through narrow internal APIs.
-
-## Phase 5: Classification Orchestration
-
-Objective: create the central business pipeline that coordinates triage, sanitization, detection, validation, and caching.
+Objective: wire the completed core logic into existing plugin tools without regressing D3/D4 runtime behavior.
 
 Files:
 
-- `src/security/detector.ts`
-- `src/gtd/classifier.ts`
-
-Prerequisites:
-
-- Phases 1 through 4.
-
-First concrete interfaces:
-
-```ts
-export interface InjectionDetector {
-  detect(content: string): Promise<InjectionDetectionResult>;
-}
-
-export interface ClassifierDependencies {
-  detector: InjectionDetector;
-}
-
-export interface ClassifyEmailInput {
-  id: string;
-  subject: string;
-  sender: string;
-  body: string;
-  receivedAt?: string;
-  headers?: Record<string, string>;
-}
-
-export function classifyEmail(
-  input: ClassifyEmailInput,
-  dependencies: ClassifierDependencies,
-): Promise<ClassificationResult>;
-```
-
-Implementation notes:
-
-- `detector.ts` should encapsulate the separate injection-detection `llm-task` call.
-- `classifier.ts` should orchestrate metadata triage, sanitization, dedup lookup, detection, classification prompt construction, schema validation, and guardrails.
-- Keep OpenClaw-specific invocation details out of the business pipeline where possible; isolate them in adapter-like boundaries.
-
-Exit criteria:
-
-- A single email can be classified through the full protected flow using only internal service interfaces.
-
-## Phase 6: Batch Processing and Plugin Tools
-
-Objective: turn the core services into reusable processing runs and OpenClaw tools.
-
-Files:
-
-- `src/pipeline/batch-processor.ts`
-- `src/plugin/tools/graph-fetch.ts`
 - `src/plugin/tools/classify-email.ts`
+- `src/plugin/tools/graph-fetch.ts`
 - `src/plugin/tools/graph-organize.ts`
 - `src/plugin/tools/weekly-review.ts`
 - `src/plugin/tools/sanitize.ts`
 - `src/plugin/index.ts`
+- `src/plugin/index.js`
 
 Prerequisites:
 
-- Phases 1 through 5.
+- Phases 1 through 4.
 
 First concrete interfaces:
 
@@ -416,16 +390,18 @@ export function processInbox(
 
 Implementation notes:
 
-- `batch-processor.ts` should be the orchestration layer for bounded resumable runs.
 - Plugin tool files should be thin wrappers that validate parameters and delegate to services.
-- `plugin/index.ts` should only register tools and bind them to the already-implemented services.
+- `plugin/index.ts` should only register tools and bind them to already-implemented services. Preserve the `definePluginEntry()` shaped default export learned from D3.
+- `plugin/index.js` should remain a thin built-dist bridge with a clear build instruction on failure.
 - `sanitize.ts` should expose Layer 1 as a standalone inspection tool, not duplicate sanitizer logic.
+- Do not rely on systemd for local D4 validation; use OpenClaw CLI health/status paths that work in the sandbox.
 
 Exit criteria:
 
 - OpenClaw can call stable tool handlers backed by tested internal services.
+- A clean checkout that has not run `npm run build` fails with a clear plugin runtime message rather than silent missing tools.
 
-## Phase 7: CLI and Review Flow
+## Phase 6: CLI, Scheduling, and Review Flow
 
 Objective: finish the user-facing interface after the lower layers are stable.
 
@@ -437,7 +413,7 @@ Files:
 
 Prerequisites:
 
-- Phases 1 through 6.
+- Phases 1 through 5.
 
 First concrete interfaces:
 
@@ -460,6 +436,7 @@ Implementation notes:
 - `cli.ts` should define commands and flags, then delegate to services or plugin adapters.
 - `index.ts` should remain a small process entrypoint.
 - Keep CLI concerns separate from business logic. Do not move classification, Graph, or pipeline logic into command handlers.
+- Scheduling commands must account for environments without systemd. The CLI should surface actionable errors or use OpenClaw's sandbox-compatible cron interfaces.
 
 Exit criteria:
 
@@ -470,29 +447,29 @@ Exit criteria:
 Before moving to the next phase:
 
 - Phase 1: shared types and settings compile cleanly and are imported by dependents instead of duplicated constants.
-- Phase 2: sanitizer, guardrails, prompts, and warning logic have unit coverage.
-- Phase 3: limits, state, triage, and dedup flows have unit coverage and deterministic behavior.
-- Phase 4: Graph modules have mocked integration coverage for auth, fetch, folder ensure, move, and categorize flows.
-- Phase 5: the full single-email classification path is covered by unit and integration tests.
-- Phase 6: plugin tools and batch processing are exercised through integration tests.
-- Phase 7: CLI commands are wired and smoke-tested without duplicating lower-layer logic.
+- Phase 2: sanitizer, detector, schemas, and guardrails have unit coverage with adversarial malformed-input and multilingual fixtures.
+- Phase 3: categories, prompts, warnings, and classifier logic have unit coverage and mocked model boundaries.
+- Phase 4: limits, state, triage, dedup, and batch processing have unit coverage and deterministic behavior.
+- Phase 5: plugin tools are backed by the completed core, `npm run build` passes, and D3 missing-tool behavior does not regress.
+- Phase 6: CLI commands and scheduling paths are wired and smoke-tested without duplicating lower-layer logic or assuming systemd.
 
 ## Test Order
 
 Implement tests in the same order as the code:
 
-1. `tests/unit/gtd/categories.test.ts`
-2. `tests/unit/security/sanitizer.test.ts`
+1. `tests/unit/security/sanitizer.test.ts`
+2. `tests/unit/security/detector.test.ts`
 3. `tests/unit/security/guardrails.test.ts`
-4. `tests/unit/pipeline/limits.test.ts`
-5. `tests/unit/pipeline/state.test.ts`
-6. `tests/unit/pipeline/triage.test.ts`
-7. `tests/unit/pipeline/dedup.test.ts`
-8. `tests/unit/graph/folders.test.ts`
-9. `tests/unit/graph/emails.test.ts`
-10. `tests/unit/gtd/classifier.test.ts`
-11. `tests/integration/classify-flow.test.ts`
-12. `tests/integration/organize-flow.test.ts`
+4. `tests/unit/gtd/categories.test.ts`
+5. `tests/unit/gtd/warnings.test.ts`
+6. `tests/unit/gtd/classifier.test.ts`
+7. `tests/unit/pipeline/limits.test.ts`
+8. `tests/unit/pipeline/triage.test.ts`
+9. `tests/unit/pipeline/dedup.test.ts`
+10. `tests/unit/pipeline/batch-processor.test.ts`
+11. Existing Graph and plugin tests as regression coverage.
+12. `tests/integration/classify-flow.test.ts`
+13. `tests/integration/organize-flow.test.ts`
 
 Security-related modules are not done until they include adversarial malformed-input cases and multilingual fixtures.
 
@@ -503,3 +480,4 @@ Security-related modules are not done until they include adversarial malformed-i
 - Internal APIs should be TypeScript-first and narrow; external SDK types should be translated at boundaries.
 - CLI and OpenClaw layers should stay thin and delegate to reusable services.
 - The first implementation should prefer simple deterministic interfaces over early abstraction.
+- `NEXT_PHASE_PLAN.md` is an intentionally temporary handoff file and may be force-added despite `.gitignore` when explicitly requested.

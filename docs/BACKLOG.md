@@ -2,11 +2,14 @@
 
 ### Current Gate
 
-**Next Phase: Steps 2-4 — Security, GTD Logic, Pipeline (Foundation Modules)**
+**Next Phase: Phase E — Replace Step 2-4 Placeholders With Tested Core Logic**
 
-Temporary handoff plans may use the ignored root `NEXT_PHASE_PLAN.md` file when needed. All implementation tasks for this phase should preserve dependency ordering and test-first requirements.
+Implementation order for this phase is strict and test-first:
+1) Security contracts + detector/guardrails, 2) GTD classifier core, 3) pipeline limits/triage/dedup/batch orchestration.
 
-Steps 1, 5, and partial Step 6 are complete. Steps 2-4 form the critical path to end-to-end flow.
+Temporary handoff plans may use the root `NEXT_PHASE_PLAN.md` file when needed.
+
+Steps 1 and 5 are complete, Step 6 has baseline tool wiring, and `pipeline/state.ts` is implemented with coverage. Remaining blockers for end-to-end reliability are concentrated in TODO-only Step 2-4 modules and empty Step 2-4 test suites.
 ---
 
 ## Implementation Tasks
@@ -34,34 +37,34 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 ### Step 2: Security Module (Tests First)
 
-- [ ] Create test fixtures: normal emails in EN, PT, ES
-- [ ] Create test fixtures: injection attempts in EN, PT, ES, multilingual
-- [ ] Write tests for `security/sanitizer.ts`
-- [ ] Write tests for `security/detector.ts`
-- [ ] Write tests for `security/guardrails.ts`
-- [ ] Implement `security/sanitizer.ts` — structural input cleaning
-- [ ] Implement `security/detector.ts` — dual-LLM injection detection
-- [ ] Implement `security/schemas.ts` — TypeBox classification schema
+- [ ] Replace placeholder fixtures with real normal emails in EN, PT, ES
+- [ ] Replace placeholder fixtures with real injection attempts in EN, PT, ES, multilingual
+- [ ] Replace empty `security/sanitizer.ts` tests with real assertions
+- [ ] Replace empty `security/detector.ts` tests with real assertions
+- [ ] Replace empty `security/guardrails.ts` tests with real assertions
+- [ ] Complete `security/sanitizer.ts` — structural input cleaning with hash/flags contract
+- [ ] Implement `security/detector.ts` — injection detection adapter boundary
+- [ ] Expand `security/schemas.ts` — TypeBox detection/classification schemas
 - [ ] Implement `security/guardrails.ts` — post-classification validation
 
 ### Step 3: GTD Business Logic (Tests First)
 
-- [ ] Write tests for `gtd/classifier.ts`
-- [ ] Write tests for `gtd/categories.ts`
-- [ ] Write tests for `gtd/warnings.ts`
-- [ ] Implement `gtd/categories.ts` — GTD category definitions & folder names
-- [ ] Implement `gtd/prompts.ts` — multilingual classification prompts
-- [ ] Implement `gtd/classifier.ts` — classification decision tree
+- [ ] Replace empty `gtd/categories.ts` tests with real assertions
+- [ ] Replace empty `gtd/classifier.ts` tests with real assertions
+- [ ] Replace empty `gtd/warnings.ts` tests with real assertions
+- [ ] Expand `gtd/categories.ts` — category helpers used by classifier and plugin tools
+- [ ] Implement `gtd/prompts.ts` — multilingual classification prompts with untrusted-content boundaries
+- [ ] Implement `gtd/classifier.ts` — protected single-email classification flow
 - [ ] Implement `gtd/warnings.ts` — high-importance first-time warnings
 - [ ] Implement `gtd/review.ts` — weekly review generator
 
 ### Step 4: Volume Processing Pipeline (Tests First)
 
-- [ ] Write tests for `pipeline/state.ts`
-- [ ] Write tests for `pipeline/triage.ts`
-- [ ] Write tests for `pipeline/dedup.ts`
-- [ ] Write tests for `pipeline/limits.ts`
-- [ ] Write tests for `pipeline/batch-processor.ts`
+- [x] Write tests for `pipeline/state.ts`
+- [ ] Replace empty `pipeline/triage.ts` tests with real assertions
+- [ ] Replace empty `pipeline/dedup.ts` tests with real assertions
+- [ ] Replace empty `pipeline/limits.ts` tests with real assertions
+- [ ] Replace empty `pipeline/batch-processor.ts` tests with real assertions
 - [x] Implement `pipeline/state.ts` — checkpoint persistence
 - [ ] Implement `pipeline/triage.ts` — metadata-only fast triage rules
 - [ ] Implement `pipeline/dedup.ts` — content-hash deduplication (SHA-256 + sql.js SQLite)
@@ -80,6 +83,7 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 
 - [x] Create `src/plugin/openclaw.plugin.json` OpenClaw plugin manifest
 - [x] Implement `plugin/index.ts` tool registry surface (repo-side contract + handlers wiring)
+- [x] Add `src/plugin/index.js` build bridge with clear `npm run build` fallback error
 - [x] Register `gtd_fetch_emails` tool
 - [x] Register `gtd_classify_email` tool
 - [x] Register `gtd_organize_email` tool

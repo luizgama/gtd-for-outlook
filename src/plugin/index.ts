@@ -1,6 +1,8 @@
 import { gtdFetchEmails } from "./tools/graph-fetch.js";
 import { gtdClassifyEmail } from "./tools/classify-email.js";
 import { gtdOrganizeEmail } from "./tools/graph-organize.js";
+import { gtdSanitizeContent } from "./tools/sanitize.js";
+import { gtdWeeklyReview } from "./tools/weekly-review.js";
 import { createMsalApp, acquireGraphAccessToken } from "../graph/auth.js";
 import { GraphClient } from "../graph/client.js";
 import { createProcessingStateStore } from "../pipeline/state.js";
@@ -85,12 +87,54 @@ export const GTD_TOOL_DEFINITIONS: PluginToolDefinition[] = [
       },
     },
   },
+  {
+    name: "gtd_sanitize_content",
+    description: "Sanitize untrusted content for safe inspection.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      required: ["content"],
+      properties: {
+        content: { type: "string", minLength: 1 },
+        maxLength: { type: "number", minimum: 1, maximum: 20000 },
+      },
+    },
+  },
+  {
+    name: "gtd_weekly_review",
+    description: "Generate weekly GTD summary from classified items.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      required: ["items"],
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["id", "category"],
+            properties: {
+              id: { type: "string", minLength: 1 },
+              category: {
+                type: "string",
+                enum: ["@Action", "@WaitingFor", "@SomedayMaybe", "@Reference", "Archive"],
+              },
+              importance: { type: "string", enum: ["high", "normal", "low"] },
+            },
+            additionalProperties: false,
+          },
+        },
+      },
+    },
+  },
 ];
 
 export const pluginHandlers = {
   gtdFetchEmails,
   gtdClassifyEmail,
   gtdOrganizeEmail,
+  gtdSanitizeContent,
+  gtdWeeklyReview,
 };
 
 function requireEnv(name: string): string {
@@ -150,6 +194,30 @@ const pluginEntry = definePluginEntry({
           client,
           params as { messageId: string; category: string; outlookCategory: string },
           stateStore,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      },
+    });
+
+    api.registerTool({
+      name: "gtd_sanitize_content",
+      description: "Sanitize untrusted content for safe inspection.",
+      parameters: GTD_TOOL_DEFINITIONS[3].parameters,
+      async execute(_toolCallId, params) {
+        const result = gtdSanitizeContent(params as { content: string; maxLength?: number });
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      },
+    });
+
+    api.registerTool({
+      name: "gtd_weekly_review",
+      description: "Generate weekly GTD summary from classified items.",
+      parameters: GTD_TOOL_DEFINITIONS[4].parameters,
+      async execute(_toolCallId, params) {
+        const result = gtdWeeklyReview(
+          params as {
+            items: Array<{ id: string; category: "@Action" | "@WaitingFor" | "@SomedayMaybe" | "@Reference" | "Archive"; importance?: "high" | "normal" | "low" }>;
+          },
         );
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       },
