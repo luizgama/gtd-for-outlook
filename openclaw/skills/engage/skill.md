@@ -1,7 +1,17 @@
 # Engage Skill
 
-<!-- TODO: Step-by-step instructions for the Engage phase -->
-<!-- 1. Load current @Action items -->
-<!-- 2. Sort by priority and deadline -->
-<!-- 3. Highlight quick actions (< 2 min) -->
-<!-- 4. Display dashboard -->
+## Objective
+
+Provide operator-facing next-action guidance from organized mailbox state.
+
+## Steps
+
+1. Load current actionable categories (`@Action`, `@WaitingFor`).
+2. Prioritize by urgency and importance markers when present.
+3. Surface quick-win items and deferred backlog candidates.
+4. Emit concise command-line summary for user action planning.
+
+## Boundaries
+
+- informational guidance only; no autonomous outbound actions
+- no message body mutation in this phase

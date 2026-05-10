@@ -7,9 +7,9 @@ This document is the implementation-order companion to `docs/BACKLOG.md`.
 
 The goal is to let an implementing engineer or agent work through the scaffolded codebase without making sequencing or interface decisions ad hoc.
 
-## Current Status After Phase E
+## Current Status After Phase G
 
-The source tree has moved beyond scaffold status. Security, GTD logic, pipeline primitives, and plugin integration checkpoint work are now implemented with passing tests on `main`. The immediate gap is no longer core logic; it is runtime usability surface (config loading, CLI command shell, and scheduler ergonomics).
+The source tree has moved beyond scaffold status. Security, GTD logic, pipeline primitives, plugin integration checkpoint, and baseline CLI/config/runtime wiring are implemented with passing tests.
 
 Known current state:
 
@@ -19,7 +19,8 @@ Known current state:
 - `src/plugin/index.js` is a runtime bridge to `dist/plugin/index.js` and must fail with an actionable `npm run build` message when the dist entry is missing.
 - D4 showed that local validation cannot assume systemd is available; cron/gateway checks need sandbox-friendly CLI and health-command paths.
 - Step 2-4 placeholder modules/tests have been replaced and are covered.
-- `src/config/constants.ts`, `src/config/settings.ts`, `src/cli.ts`, and `src/index.ts` remain the primary delivery-surface critical path.
+- OpenClaw workspace docs/skills are now populated and aligned to registered tool behavior.
+- Remaining critical path is release hardening/documentation finalization and release tagging.
 
 ## Dependency Order
 
@@ -106,10 +107,10 @@ export interface ClassificationResult {
 
 Implementation notes:
 
-- `constants.ts` currently remains a TODO and should define default numeric limits, default folder names, and default local storage locations.
+- `constants.ts` now defines default numeric limits and local storage locations; extend it only when introducing new runtime surfaces.
 - `categories.ts` already exposes folder/category names; expand it only as needed for classifier and warnings tests.
 - `schemas.ts` has a minimal classification schema; extend it before classifier/guardrail implementation so validation is shared.
-- `settings.ts` remains a TODO; implement it before CLI and batch processing need runtime config.
+- `settings.ts` now loads env/local config with early Graph credential validation; keep it as the single runtime config entrypoint.
 
 Exit criteria:
 

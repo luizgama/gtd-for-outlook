@@ -1,7 +1,18 @@
 # Capture Skill
 
-<!-- TODO: Step-by-step instructions for the Capture phase -->
-<!-- 1. Authenticate to Microsoft Graph API -->
-<!-- 2. Fetch unread emails from Inbox -->
-<!-- 3. Apply lookback window filter -->
-<!-- 4. Return structured email list -->
+## Objective
+
+Fetch a bounded set of unread messages for downstream GTD processing.
+
+## Steps
+
+1. Verify Graph auth settings are present.
+2. Call `gtd_fetch_emails` with conservative `top` bound.
+3. Apply optional `since` boundary when the run specifies lookback control.
+4. Return structured message list for clarify stage.
+
+## Output
+
+- list of message metadata
+- pagination cursor/next-link context if present
+- count summary for run telemetry
