@@ -115,3 +115,27 @@ Detailed implementation order, first interfaces, and phase gates are documented 
 - [ ] Final security review of prompt injection defenses
 - [ ] Audit dependency tree (`npm audit`)
 - [ ] Tag v0.1.0 release
+
+---
+
+## Future Features
+
+### Extensible Sanitizer Plugins
+
+- [ ] Refactor `security/sanitizer.ts` into a plugin-like sanitizer pipeline with registry + ordered execution
+- [ ] Define `SanitizerPlugin` contract (`id`, `priority`, `applies`, `transform`)
+- [ ] Add plugin execution tracing metadata to sanitization output (applied plugins, flags, findings)
+- [ ] Add config-driven enable/disable for sanitizer plugins
+
+### Encoded Prompt-Injection Defenses
+
+- [ ] Add ASCII-encoded text detector/decoder sanitizer plugin
+- [ ] Add Morse code detector/decoder sanitizer plugin
+- [ ] Add bounded multi-pass decoder policy (length/depth/time limits)
+- [ ] Add guardrail checks that compare raw and decoded representations
+
+### Future Test Coverage
+
+- [ ] Add fixtures for encoded benign content and encoded adversarial injection content
+- [ ] Add per-plugin unit tests for applicability, transform correctness, and bounds enforcement
+- [ ] Add integration tests verifying decoded prompt-injection attempts are caught before classification

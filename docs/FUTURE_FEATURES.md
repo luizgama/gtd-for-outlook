@@ -33,3 +33,41 @@ Auto-create calendar events for emails with detected deadlines. Would use Graph 
 ## 8. Graph API Change Notifications
 
 Real-time email processing via webhooks instead of polling, preventing backlog accumulation. Requires a webhook endpoint (local server or cloud function).
+
+## 9. Extensible Sanitizer Plugin Architecture
+
+Refactor `security/sanitizer.ts` into a plugin-like sanitization pipeline so new attack-method sanitizers can be added without changing core classification code.
+
+Planned design:
+
+- `SanitizerPlugin` contract with `id`, `priority`, `applies`, and `transform`
+- `SanitizerRegistry` for deterministic ordered execution and plugin enable/disable
+- `SanitizationContext` carrying original hash, cumulative flags/findings, and applied-plugin trace metadata
+
+Execution model:
+
+1. Structural baseline sanitizer runs first.
+2. Detection-oriented plugins run by priority.
+3. Decoder/normalization plugins run in a bounded pass.
+4. Final output includes full plugin trace for audit/debug.
+
+Planned plugin set:
+
+- ASCII-encoded text detector/decoder plugin (decimal/hex byte stream patterns)
+- Morse code detector/decoder plugin
+- Base64 variant hardening plugin
+- Obfuscation plugins (delimiter/junk token stripping, extended homoglyph normalization)
+- Configurable deny-pattern plugins for known jailbreak motifs
+
+Safety constraints:
+
+- Decode length/depth/time limits
+- Confidence thresholds before decoded output is trusted
+- Preserve raw + decoded representations for guardrail cross-checks
+- Decode as text transformation only (no execution semantics)
+
+Testing expectations:
+
+- Fixtures for benign encoded content and adversarial encoded injections
+- Per-plugin unit tests (`applies`, `transform`, bounds handling)
+- Integration tests validating decoded prompt-injection detection before classification

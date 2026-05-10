@@ -278,6 +278,64 @@ This detection call uses `llm-task` (JSON-only, no tools) — isolated from the 
 
 ### Layer 5: Post-Classification Guardrails (`security/guardrails.ts`)
 - Verify classification is one of the allowed GTD categories (enum check)
+
+---
+
+## Future Features
+
+### Extensible Sanitizer Plugin Architecture
+
+Evolve `security/sanitizer.ts` from a single implementation into a plugin-like pipeline so new attack-method sanitizers can be added without changing the core classifier flow.
+
+Target design:
+
+- `SanitizerPlugin` interface:
+  - `id: string`
+  - `priority: number`
+  - `applies(input): boolean`
+  - `transform(input, context): { output, flags, findings }`
+- `SanitizerRegistry`:
+  - ordered plugin registration
+  - deterministic execution order
+  - plugin-level enable/disable via config
+- `SanitizationContext`:
+  - original hash
+  - cumulative flags/findings
+  - trace of applied plugins for audit/debug
+
+Execution model:
+
+1. Structural baseline sanitizer runs first (current behavior).
+2. Detection-oriented sanitizer plugins run by priority.
+3. Normalization/decoder plugins run in a bounded, side-effect-free pass.
+4. Final sanitizer output is emitted with full plugin trace metadata.
+
+### Planned Attack-Method Plugins
+
+- Encoded text normalizers:
+  - ASCII code stream detector/decoder (decimal/hex byte patterns)
+  - Morse code detector/decoder
+  - Base64 variant detector/decoder hardening
+- Obfuscation handlers:
+  - excessive delimiter/junk token stripping
+  - homoglyph-heavy token normalization extensions
+- Policy plugins:
+  - configurable deny-pattern modules for known jailbreak motifs
+  - high-risk phrase detectors after decoding pass
+
+### Safety Constraints for Decoder Plugins
+
+- Strict decode limits (input length, output length, decode depth).
+- Confidence thresholds before decoded output is trusted.
+- Preserve original + decoded content snapshots for guardrail validation.
+- Never execute interpreted content; decode is text transformation only.
+
+### Testing Requirements for Future Sanitizer Plugins
+
+- Fixture sets for clean vs adversarial encoded samples.
+- Per-plugin unit tests (`applies`, `transform`, bounds behavior).
+- Integration tests proving decoded injections are surfaced to detector/guardrails.
+- Regression tests ensuring benign multilingual content is not over-sanitized.
 - Flag anomalous patterns (e.g., batch of emails all classified identically)
 - Cross-check: if detector (Layer 2) flagged injection but classifier produced high confidence, escalate for human review
 - Log all suspicious classifications with full context for audit
