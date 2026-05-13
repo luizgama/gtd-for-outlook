@@ -11,16 +11,36 @@ export interface TriageDecision {
   reason: string;
 }
 
-export function triageEmailMetadata(email: EmailMetadata, now: Date = new Date()): TriageDecision | null {
+export interface TriageOptions {
+  duplicateVendorNoticePreference?: "reference" | "archive";
+}
+
+export function triageEmailMetadata(
+  email: EmailMetadata,
+  now: Date = new Date(),
+  options: TriageOptions = {},
+): TriageDecision | null {
   const subject = email.subject.toLowerCase();
   const sender = email.sender.toLowerCase();
   const headers = email.headers ?? {};
+  const duplicateVendorNoticePreference = options.duplicateVendorNoticePreference ?? "reference";
   const listUnsubscribe = Object.entries(headers).find(([key]) => key.toLowerCase() === "list-unsubscribe");
+  const isAutomatedSender = sender.includes("noreply@") || sender.includes("no-reply@");
+  const isSystemNotice = /\b(incident|maintenance|outage|status page|service alert)\b/.test(subject);
+  const isLikelyDuplicateNotice = /\b(update|reminder|follow-up|resolved|closure|recap)\b/.test(subject);
+
+  if (isAutomatedSender && isSystemNotice && isLikelyDuplicateNotice) {
+    return {
+      action: duplicateVendorNoticePreference,
+      reason: `Likely duplicate vendor/system notice (preferred: ${duplicateVendorNoticePreference}).`,
+    };
+  }
+
   if (listUnsubscribe && listUnsubscribe[1]) {
     return { action: "reference", reason: "Detected newsletter header (List-Unsubscribe)." };
   }
 
-  if (sender.includes("noreply@") || sender.includes("no-reply@")) {
+  if (isAutomatedSender) {
     return { action: "reference", reason: "Detected automated sender address." };
   }
 

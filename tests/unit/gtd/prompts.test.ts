@@ -18,6 +18,9 @@ describe("gtd/prompts", () => {
     expect(prompt).toContain("<untrusted_email>");
     expect(prompt).toContain("<subject>Subject</subject>");
     expect(prompt).toContain("classify only");
+    expect(prompt).toContain("Use @Reference for useful records");
+    expect(prompt).toContain("Use @Action for pending approvals");
+    expect(prompt).toContain("Confidence rubric");
   });
 
   it("escapes untrusted fields before embedding in xml-like tags", () => {

@@ -27,19 +27,114 @@ export interface ClassifierResult extends ClassificationResult {
 
 function fallbackClassification(sanitizedText: string): ClassificationResult {
   const lower = sanitizedText.toLowerCase();
-  if (/\b(waiting|awaiting|follow up|follow-up|vendor|partner)\b/.test(lower)) {
-    return { category: "@WaitingFor", confidence: 0.62, reason: "External dependency language detected." };
+
+  const actionStrong = [
+    /\b(please|por favor)\s+(review|approve|reply|respond|confirm)\b/,
+    /\b(action required|required action|requires your action)\b/,
+    /\b(awaiting your approval|pending your approval|aguarda aprovação|aguardando aprovação)\b/,
+    /\b(by|until)\s+(monday|tuesday|wednesday|thursday|friday|eod|end of day|amanhã|hoje)\b/,
+    /\b(deadline|prazo)\b/,
+  ];
+  const waitingSignals = [
+    /\b(waiting for|awaiting|pending response|follow up|follow-up)\b/,
+    /\b(vendor|partner|supplier|terceiro|fornecedor)\b/,
+  ];
+  const somedaySignals = [/\b(idea|someday|later|maybe|talvez|futuro)\b/];
+  const referenceStrong = [
+    /\b(fyi|for your information|reference|documentation|notes|ata|meeting report|relatório)\b/,
+    /\b(incident|outage|maintenance|manutenção)\b/,
+    /\b(approved|aprovado|aprovada|approval complete|confirmed|confirmado|confirmada)\b/,
+    /\b(receipt|invoice approved|timesheet approved|férias aprovadas)\b/,
+    /\b(report|summary|minutes)\b/,
+  ];
+  const archiveStrong = [
+    /\b(unsubscribe|newsletter|promo|promotion|marketing|sale|discount|deal)\b/,
+    /\b(one-time code|verification code|otp|login code|security code|código de verificação)\b/,
+    /\b(no-reply marketing)\b/,
+  ];
+
+  const actionMatches = actionStrong.filter((re) => re.test(lower)).length;
+  const waitingMatches = waitingSignals.filter((re) => re.test(lower)).length;
+  const somedayMatches = somedaySignals.filter((re) => re.test(lower)).length;
+  const referenceMatches = referenceStrong.filter((re) => re.test(lower)).length;
+  const archiveMatches = archiveStrong.filter((re) => re.test(lower)).length;
+
+  const score = {
+    "@Action": actionMatches * 4 + (/\b(review|approve|reply)\b/.test(lower) ? 1 : 0),
+    "@WaitingFor": waitingMatches * 3,
+    "@SomedayMaybe": somedayMatches * 2,
+    "@Reference": referenceMatches * 3,
+    Archive: archiveMatches * 3,
+  };
+
+  // Pending approval is an explicit action; completed approval is a reference record.
+  if (/\b(aguarda aprovação|aguardando aprovação|awaiting your approval|pending your approval)\b/.test(lower)) {
+    score["@Action"] += 3;
   }
-  if (/\b(idea|someday|later|maybe)\b/.test(lower)) {
-    return { category: "@SomedayMaybe", confidence: 0.64, reason: "Deferred/planning language detected." };
+  if (/\b(aprovado|aprovada|approved|approval complete)\b/.test(lower)) {
+    score["@Reference"] += 3;
+    score["@Action"] = Math.max(0, score["@Action"] - 1);
   }
-  if (/\b(review|approve|reply|deadline|action|required)\b/.test(lower)) {
-    return { category: "@Action", confidence: 0.72, reason: "Action-oriented wording detected." };
+
+  // OTP/login code notices are generally non-actionable records after use.
+  if (/\b(one-time code|verification code|otp|login code|security code|código de verificação)\b/.test(lower)) {
+    score.Archive += 5;
+    score["@Action"] = 0;
   }
-  if (/\b(fyi|reference|documentation|notes)\b/.test(lower)) {
-    return { category: "@Reference", confidence: 0.62, reason: "Reference-only content detected." };
+
+  // Choose the highest score category. Tie-breaking prefers @Action > @Reference > @WaitingFor > @SomedayMaybe > Archive.
+  const ordered: Array<keyof typeof score> = ["@Action", "@Reference", "@WaitingFor", "@SomedayMaybe", "Archive"];
+  let best: keyof typeof score = "Archive";
+  for (const category of ordered) {
+    if (score[category] > score[best]) {
+      best = category;
+    }
   }
-  return { category: "Archive", confidence: 0.56, reason: "No clear action signal detected." };
+  const sortedScores = Object.values(score).sort((a, b) => b - a);
+  const scoreGap = sortedScores[0] - (sortedScores[1] ?? 0);
+  const ambiguityPenalty = scoreGap <= 1 ? 0.08 : 0;
+  const calibrated = (base: number) => Math.max(0, Math.min(1, Number((base - ambiguityPenalty).toFixed(2))));
+
+  if (score[best] <= 0) {
+    return { category: "Archive", confidence: 0.52, reason: "No meaningful GTD signal detected." };
+  }
+
+  if (best === "@Action") {
+    return {
+      category: "@Action",
+      confidence: calibrated(score["@Action"] >= 6 ? 0.86 : 0.74),
+      reason:
+        score["@Action"] >= 6
+          ? "Explicit user action and urgency signals detected."
+          : "User follow-up/action language detected.",
+    };
+  }
+  if (best === "@WaitingFor") {
+    return {
+      category: "@WaitingFor",
+      confidence: calibrated(score["@WaitingFor"] >= 6 ? 0.82 : 0.71),
+      reason: "External dependency or pending response signal detected.",
+    };
+  }
+  if (best === "@SomedayMaybe") {
+    return {
+      category: "@SomedayMaybe",
+      confidence: calibrated(score["@SomedayMaybe"] >= 4 ? 0.76 : 0.67),
+      reason: "Deferred/planning language detected.",
+    };
+  }
+  if (best === "@Reference") {
+    return {
+      category: "@Reference",
+      confidence: calibrated(score["@Reference"] >= 6 ? 0.83 : 0.72),
+      reason: "Non-actionable but useful record signal detected.",
+    };
+  }
+  return {
+    category: "Archive",
+    confidence: calibrated(score.Archive >= 6 ? 0.78 : 0.66),
+    reason: "Low-value, promotional, or one-time code signal detected.",
+  };
 }
 
 export async function classifyEmail(
