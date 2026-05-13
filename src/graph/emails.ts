@@ -99,13 +99,6 @@ export async function fetchMessagesPageByNextLink(
   };
 }
 
-/**
- * Check if an ID is in unique ID format (AAMk...) or ItemID format (hex ending with =)
- */
-function isUniqueIdFormat(id: string): boolean {
-  return id.startsWith("AAMk");
-}
-
 export async function fetchMessageBodyAndHeaders(
   client: GraphClient,
   messageId: string,
@@ -116,26 +109,43 @@ export async function fetchMessageBodyAndHeaders(
   );
 }
 
+/**
+ * Move a message to a destination folder.
+ * 
+ * Microsoft Graph /move endpoint requires:
+ * - URL path: unique ID format (AAMk...) is accepted
+ * - Body.destinationId: MUST be ItemID format (long hex string ending with =)
+ * 
+ * This function fetches the destination folder first to get its ItemID.
+ */
 export async function moveMessage(
   client: GraphClient,
   messageId: string,
-  destinationId: string,
+  destinationFolderId: string,
 ): Promise<EmailMessage> {
-  // Microsoft Graph /move endpoint accepts unique ID format directly (no ItemID needed)
-  // Do NOT URL encode with encodeURIComponent() as it breaks the AAMk... format
+  // Fetch destination folder to get its ItemID (required for POST /move body)
+  const destination = await fetchMessageBodyAndHeaders(client, destinationFolderId);
+
+  // Use unique ID in URL path, ItemID in body
   return client.post<EmailMessage>(`/me/messages/${messageId}/move`, {
-    destinationId,
+    destinationId: destination.id,
   });
 }
 
+/**
+ * Apply Outlook categories to a message.
+ * 
+ * Microsoft Graph /categories endpoint requires ItemID format for the message ID.
+ */
 export async function applyCategories(
   client: GraphClient,
   messageId: string,
   categories: string[],
 ): Promise<EmailMessage> {
-  // Microsoft Graph /categories endpoint accepts unique ID format directly (no ItemID needed)
-  // Do NOT URL encode with encodeURIComponent() as it breaks the AAMk... format
-  return client.patch<EmailMessage>(`/me/messages/${messageId}`, {
+  // Fetch message to get its ItemID (required for PATCH /categories)
+  const message = await fetchMessageBodyAndHeaders(client, messageId);
+  
+  return client.patch<EmailMessage>(`/me/messages/${message.id}`, {
     categories,
   });
 }

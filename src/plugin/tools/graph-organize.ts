@@ -1,4 +1,4 @@
-import { moveMessage, applyCategories } from "../../graph/emails.js";
+import { fetchMessageBodyAndHeaders, moveMessage, applyCategories } from "../../graph/emails.js";
 import { createFolder, getFolderByName } from "../../graph/folders.js";
 import type { GraphClient } from "../../graph/client.js";
 import type { MailFolder } from "../../graph/folders.js";
@@ -21,7 +21,6 @@ export type OrganizeEmailOutput = {
 
 /**
  * Validate that a folder ID exists by fetching it directly.
- * This ensures we have a valid destination before moving any messages.
  */
 async function validateFolderExists(client: GraphClient, folderId: string): Promise<MailFolder> {
   try {
@@ -68,11 +67,16 @@ export async function gtdOrganizeEmail(
     console.log(`Created and validated GTD folder: ${folder.displayName} (ID: ${folder.id})`);
   }
 
-  // Step 4: Now we have a validated, existing folder - proceed with move
-  console.log(`Moving message to validated destination folder: ${folder.displayName}`);
+  // Step 4: Now we have a validated folder - proceed with move
+  // moveMessage() internally fetches the destination to get its ItemID for the POST /move body
+
+  console.log(`Moving message to validated GTD folder: ${folder.displayName}`);
 
   const moveResult = await moveMessage(client, input.messageId, folder.id);
+  
+  console.log(`Move successful!`);
 
+  // Step 5: Apply Outlook categories using the moved message ID
   const patched = await applyCategories(client, moveResult.id, [input.outlookCategory]);
   
   stateStore?.markProcessed(input.messageId, input.category);
