@@ -43,8 +43,8 @@ These rules are **mandatory** for all contributors:
 
 ## Project Structure
 
-See `docs/ARCHITECTURE.md` for detailed architecture documentation.
-See `docs/plan.md` for the full implementation plan.
+See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for detailed architecture documentation.
+See [`docs/plan.md`](./docs/plan.md) for the full implementation plan.
 
 ## Coding Guidelines
 
