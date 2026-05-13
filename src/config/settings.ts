@@ -1,5 +1,5 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname } from "node:path";;
 import {
   APP_HOME_DIR,
   DEFAULT_AUTO_APPROVE_HIGH_IMPORTANCE,
@@ -39,6 +39,8 @@ export interface AppSettings {
   stateFilePath: string;
   classificationCachePath: string;
   autoApproveHighImportance: boolean;
+  logGraphApiToFile: boolean;
+  logGraphApiFilePath?: string;
 }
 
 export interface SetupConfigInput {
@@ -49,6 +51,8 @@ export interface SetupConfigInput {
 type PartialConfig = Partial<AppSettings> & {
   graphClientId?: string;
   graphTenantId?: string;
+  logGraphApiToFile?: boolean;
+  logGraphApiFilePath?: string;
 };
 
 type EnvSource = NodeJS.ProcessEnv;
@@ -138,6 +142,12 @@ export function loadAppSettings(
     stateFilePath: env.GTD_STATE_PATH ?? fileConfig.stateFilePath ?? DEFAULT_STATE_PATH,
     classificationCachePath:
       env.GTD_CLASSIFICATION_CACHE_PATH ?? fileConfig.classificationCachePath ?? DEFAULT_CLASSIFICATION_CACHE_PATH,
+    logGraphApiToFile: parseBoolean(
+      env.LOG_GRAPH_API_TO_FILE,
+      fileConfig.logGraphApiToFile ?? false,
+    ),
+    logGraphApiFilePath:
+      env.LOG_GRAPH_API_FILE_PATH ?? fileConfig.logGraphApiFilePath ?? undefined,
     autoApproveHighImportance: parseBoolean(
       env.GTD_AUTO_APPROVE_HIGH_IMPORTANCE,
       fileConfig.autoApproveHighImportance ?? DEFAULT_AUTO_APPROVE_HIGH_IMPORTANCE,
@@ -156,6 +166,8 @@ export function loadAppSettings(
     appHomeDir: merged.appHomeDir ?? APP_HOME_DIR,
     stateFilePath: merged.stateFilePath ?? DEFAULT_STATE_PATH,
     classificationCachePath: merged.classificationCachePath ?? DEFAULT_CLASSIFICATION_CACHE_PATH,
+    logGraphApiToFile: merged.logGraphApiToFile ?? false,
+    logGraphApiFilePath: merged.logGraphApiFilePath ?? undefined,
     autoApproveHighImportance: merged.autoApproveHighImportance ?? DEFAULT_AUTO_APPROVE_HIGH_IMPORTANCE,
   };
 }
@@ -169,9 +181,11 @@ export function writeSetupConfig(
 ): string {
   const configPath = options.configPath ?? DEFAULT_CONFIG_PATH;
   const fsOps = options.fsOps ?? defaultFsOps;
-  const payload = {
+  const payload: Partial<AppSettings> = {
     graphClientId: input.graphClientId.trim(),
     graphTenantId: input.graphTenantId.trim(),
+    logGraphApiToFile: false,
+    logGraphApiFilePath: undefined,
   };
 
   fsOps.mkdirSync(dirname(configPath), { recursive: true, mode: 0o700 });

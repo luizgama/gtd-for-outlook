@@ -1,6 +1,6 @@
 # Production Handoff Runbook
 
-Date: 2026-05-10
+Date: 2026-05-13
 Repository: `luizgama/gtd-for-outlook`
 
 This runbook covers end-to-end installation, OpenClaw agent/plugin setup, project configuration, execution, and real inbox validation.
@@ -50,6 +50,13 @@ Set:
 - `GRAPH_CLIENT_ID=<client-id>`
 - `GRAPH_TENANT_ID=<tenant-id-or-common>`
 
+Enable Graph API request logging (optional, for debugging):
+
+```bash
+export LOG_GRAPH_API_TO_FILE=true
+export LOG_GRAPH_API_FILE_PATH=/tmp/gtd-for-outlook/graph-api.log
+```
+
 Then run setup:
 
 ```bash
@@ -98,96 +105,214 @@ openclaw gateway call tools.catalog --json --params '{"agentId":"main"}'
 openclaw gateway call tools.effective --json --params '{"agentId":"main","sessionKey":"agent:main:main"}'
 ```
 
-Expected: effective tools include the GTD tool set and `llm-task`.
-
-## 7) Validate OpenClaw gateway and scheduler availability
+## 7) Run the process command
 
 ```bash
-openclaw gateway health --json
-openclaw cron status --json
+node dist/index.js process --agent
 ```
 
-If systemd is unavailable in the environment, run gateway directly for session validation:
+Or with custom options:
 
 ```bash
-openclaw gateway
+node dist/index.js process --batch-size 100 --max-emails 500 --since 2026-05-01
 ```
 
-## 8) Functional smoke tests
+## 8) Verify email processing
 
-Run local CLI commands:
+Check that emails are being organized into GTD folders and categories are applied.
+
+Use the log file if logging is enabled:
 
 ```bash
-node dist/index.js status
-node dist/index.js cache stats
-node dist/index.js review
+tail -f /tmp/gtd-for-outlook/graph-api.log
 ```
 
-Expected: no credential/config crashes, and cache/status output is returned.
+## 9) Scheduling (optional)
 
-## 9) Controlled real-inbox processing (first run)
-
-Start with bounded parameters:
-
-```bash
-node dist/index.js process --max-emails 10 --batch-size 10 --max-llm-calls 10 --since 2026-05-01
-```
-
-Then validate agent-routed path:
-
-```bash
-node dist/index.js process --agent --max-emails 10 --batch-size 10 --max-llm-calls 10
-```
-
-Expected:
-
-- run returns structured status/output
-- no unhandled tool-registration/tool-resolution errors
-- classification/organization path completes for sampled emails
-
-## 10) Outlook mailbox validation
-
-In Outlook, verify:
-
-- GTD folders exist: `@Action`, `@WaitingFor`, `@SomedayMaybe`, `@Reference`, `Archive`
-- processed sample emails moved to expected folders/categories
-- no unexpected bulk movement
-
-## 11) Idempotency and cache/state checks
-
-Re-run a bounded process command. Expected outcome: already-processed messages are mostly skipped.
-
-Cache checks:
-
-```bash
-node dist/index.js cache stats
-node dist/index.js cache clear
-node dist/index.js cache stats
-```
-
-## 12) Scheduler validation
-
-Create schedule:
+Set up auto-processing:
 
 ```bash
 node dist/index.js schedule --every 30m
 ```
 
-Validate:
+## 10) Troubleshooting
+
+- Check OpenClaw logs: `openclaw logs`
+- Inspect Graph API errors in log file if logging enabled
+- Verify Azure permissions with: `az ad app show --id <client-id>`
+
+See `docs/BACKLOG.md` for the full task list and `docs/plan.md` for the implementation plan.
+
+## Status
+
+**Production handoff ready (pre-tag)** — core security/GTD/pipeline/plugin/CLI modules are implemented and test-covered, with release validation and operator runbooks prepared. Remaining release action is final tag publication.
+
+See [`docs/BACKLOG.md`](docs/BACKLOG.md) for the full task list and [`docs/plan.md`](docs/plan.md) for the implementation plan.
+
+## Production Handoff
+
+For production installation, OpenClaw setup, and real inbox validation, use:
+
+- [docs/PRODUCTION_HANDOFF_RUNBOOK.md](docs/PRODUCTION_HANDOFF_RUNBOOK.md)
+- [docs/RELEASE_HANDOFF_V0.1.0.md](docs/RELEASE_HANDOFF_V0.1.0.md)
+- [docs/openclaw-agent-reference.md](docs/openclaw-agent-reference.md)
+
+## Prerequisites
+
+- Node.js 22+
+- A Microsoft 365 account
+- An Azure App Registration with `Mail.ReadWrite` permissions
+
+## Quick Start
 
 ```bash
-openclaw cron list --json
-openclaw cron runs --id <job-id> --json
+# Clone and install
+git clone https://github.com/luizgama/gtd-for-outlook.git
+cd gtd-for-outlook
+npm ci
+
+# Configure Azure credentials
+gtd-outlook setup
+
+# Process emails
+gtd-outlook process --agent
 ```
 
-Expected: job is registered and run metadata is persisted.
+## Architecture
 
-## 13) Production readiness acceptance checklist
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/plan.md](docs/plan.md) for detailed architecture documentation.
 
-- `npm run build` passes
-- `npm test` passes
-- `npm audit` reports no unresolved release-blocking vulnerabilities
-- plugin runtime inspection shows all required GTD tools loaded
-- bounded real inbox run succeeds and expected GTD foldering is observed
-- scheduler run path is validated in target runtime environment
+```mermaid
+flowchart TD
+  CLI[gtd-outlook CLI] --> OC[OpenClaw Gateway + Agent Runtime]
+  OC --> PL[GTD Plugin Tools]
+  PL --> GTD[GTD Classifier/Pipeline]
+  GTD --> SEC[Sanitizer + Detector + Guardrails]
+  PL --> GRAPH[Microsoft Graph API Layer]
+  GRAPH --> M365[Microsoft 365 Mailbox]
+```
 
+## Security
+
+Email content is treated as **untrusted input** that may contain prompt injection attacks in any language. The system uses a 6-layer defense strategy:
+
+1. **Input validation** — strict schema enforcement on all tool parameters
+2. **Prompt injection detection** — multi-stage sanitizer pipeline
+3. **Category restriction** — only GTD-approved categories allowed
+4. **Action gating** — no move operations without validated classification
+5. **State checkpointing** — idempotent processing prevents duplicate actions
+6. **Audit logging** — request/response tracing for security review
+
+For detailed threat modeling and mitigations, see [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+
+## GTD Folder Structure
+
+The plugin creates these folders in your inbox:
+
+- `@Action` — items requiring immediate attention
+- `@WaitingFor` — tasks waiting on others
+- `@SomedayMaybe` — deferrable ideas and research
+- `@Reference` — informational material
+- `Archive` — completed or inactive items
+
+Each folder has a corresponding Outlook category label (e.g., "GTD: Action").
+
+## Token caching
+
+Authenticate once, then run unattended using the classification cache.
+
+## Status
+
+**Production handoff ready (pre-tag)** — core security/GTD/pipeline/plugin/CLI modules are implemented and test-covered, with release validation and operator runbooks prepared. Remaining release action is final tag publication.
+
+See [`docs/BACKLOG.md`](docs/BACKLOG.md) for the full task list and [`docs/plan.md`](docs/plan.md) for the implementation plan.
+
+## Production Handoff
+
+For production installation, OpenClaw setup, and real inbox validation, use:
+
+- [docs/PRODUCTION_HANDOFF_RUNBOOK.md](docs/PRODUCTION_HANDOFF_RUNBOOK.md)
+- [docs/RELEASE_HANDOFF_V0.1.0.md](docs/RELEASE_HANDOFF_V0.1.0.md)
+- [docs/openclaw-agent-reference.md](docs/openclaw-agent-reference.md)
+
+## Prerequisites
+
+- Node.js 22+
+- A Microsoft 365 account
+- An Azure App Registration with `Mail.ReadWrite` permissions
+
+## Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/luizgama/gtd-for-outlook.git
+cd gtd-for-outlook
+npm ci
+
+# Configure Azure credentials
+gtd-outlook setup
+
+# Process emails
+gtd-outlook process --agent
+```
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/plan.md](docs/plan.md) for detailed architecture documentation.
+
+```mermaid
+flowchart TD
+  CLI[gtd-outlook CLI] --> OC[OpenClaw Gateway + Agent Runtime]
+  OC --> PL[GTD Plugin Tools]
+  PL --> GTD[GTD Classifier/Pipeline]
+  GTD --> SEC[Sanitizer + Detector + Guardrails]
+  PL --> GRAPH[Microsoft Graph API Layer]
+  GRAPH --> M365[Microsoft 365 Mailbox]
+```
+
+## Security
+
+Email content is treated as **untrusted input** that may contain prompt injection attacks in any language. The system uses a 6-layer defense strategy:
+
+1. **Input validation** — strict schema enforcement on all tool parameters
+2. **Prompt injection detection** — multi-stage sanitizer pipeline
+3. **Category restriction** — only GTD-approved categories allowed
+4. **Action gating** — no move operations without validated classification
+5. **State checkpointing** — idempotent processing prevents duplicate actions
+6. **Audit logging** — request/response tracing for security review
+
+For detailed threat modeling and mitigations, see [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+
+## GTD Folder Structure
+
+The plugin creates these folders in your inbox:
+
+- `@Action` — items requiring immediate attention
+- `@WaitingFor` — tasks waiting on others
+- `@SomedayMaybe` — deferrable ideas and research
+- `@Reference` — informational material
+- `Archive` — completed or inactive items
+
+Each folder has a corresponding Outlook category label (e.g., "GTD: Action").
+
+## Token caching
+
+Authenticate once, then run unattended using the classification cache.
+
+## OpenClaw Platform Phase
+
+This plugin targets production readiness for OpenClaw's `llm-task` boundary through v2 of the platform. For production runtime, this phase targets `gpt-5` through the OpenClaw `llm-task` boundary.
+
+## OpenClaw inside Docker Sandbox
+
+Docker Sandboxes run AI coding agents in isolated microVM sandboxes. Each sandbox gets its own Docker daemon, filesystem, and network — the agent can build containers, install packages, and modify files without touching your host system.
+
+See [https://docs.docker.com/ai/sandboxes/](https://docs.docker.com/ai/sandboxes/) to learn more
+
+## Contributing
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for development guidelines.
+
+## License
+
+MIT - see [LICENSE](LICENSE)

@@ -148,12 +148,20 @@ function requireEnv(name: string): string {
 async function createGraphClient(): Promise<GraphClient> {
   const clientId = requireEnv("GRAPH_CLIENT_ID");
   const tenantId = requireEnv("GRAPH_TENANT_ID");
+  
+  // Optional: Enable Graph API request logging to file
+  const LOG_GRAPH_API_REQUESTS_FILE = process.env.LOG_GRAPH_API_REQUESTS_FILE?.trim();
+  const enableFileLogging = LOG_GRAPH_API_REQUESTS_FILE !== undefined && LOG_GRAPH_API_REQUESTS_FILE !== "false";
+
   const app = createMsalApp({ clientId, tenantId });
+  
   return new GraphClient({
     tokenProvider: async () => {
       const token = await acquireGraphAccessToken(app);
       return token.accessToken;
     },
+    logToFile: enableFileLogging,
+    logFilePath: LOG_GRAPH_API_REQUESTS_FILE,
   });
 }
 

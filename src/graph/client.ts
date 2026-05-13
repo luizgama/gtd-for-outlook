@@ -11,6 +11,8 @@ export type GraphClientOptions = {
   baseUrl?: string;
   maxRetries?: number;
   logger?: (message: string) => void;
+  logToFile?: boolean;
+  logFilePath?: string;
 };
 
 export class GraphRequestError extends Error {
@@ -69,6 +71,8 @@ export class GraphClient {
   private readonly baseUrl: string;
   private readonly maxRetries: number;
   private readonly logger: (message: string) => void;
+  private readonly logToFile: boolean;
+  private readonly logFilePath: string | undefined;
 
   constructor(options: GraphClientOptions) {
     this.tokenProvider = options.tokenProvider;
@@ -76,6 +80,8 @@ export class GraphClient {
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.logger = options.logger ?? (() => {});
+    this.logToFile = options.logToFile ?? false;
+    this.logFilePath = options.logFilePath ?? undefined;
   }
 
   async get<T>(path: string): Promise<T> {
@@ -96,9 +102,15 @@ export class GraphClient {
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
       const token = await this.tokenProvider();
-      this.logger(
-        `graph [${method}] ${normalizedPath} attempt=${attempt + 1}`,
-      );
+      const logMessage = `graph [${method}] ${normalizedPath} attempt=${attempt + 1}, Token: ${token.substring(0, 20)}...`;
+      
+      if (this.logger) {
+        this.logger(logMessage);
+      }
+
+      if (this.logToFile) {
+        await this.writeToLog(logMessage);
+      }
 
       const response = await this.fetchImpl(url, {
         method,
@@ -112,7 +124,9 @@ export class GraphClient {
       if (response.status === 429 && attempt < this.maxRetries) {
         const retryAfter = parseRetryAfterSeconds(response.headers.get("Retry-After"));
         const delayMs = (retryAfter ?? 1) * 1000;
-        this.logger(`graph [${method}] ${normalizedPath} throttled retryAfter=${retryAfter ?? 1}s`);
+        const throttleMessage = `graph [${method}] ${normalizedPath} throttled retryAfter=${retryAfter ?? 1}s`;
+        this.logger(throttleMessage);
+        await this.writeToLog(throttleMessage);
         await sleep(delayMs);
         continue;
       }
@@ -120,6 +134,9 @@ export class GraphClient {
       const text = await response.text();
       if (!response.ok) {
         const parsedBody: unknown = text ? (JSON.parse(text) as unknown) : null;
+        const errorMessage = `Graph request failed (${response.status} ${response.statusText}) - Method: ${method}, Path: ${normalizedPath}, Body: ${JSON.stringify(parsedBody)} (Retry ${attempt + 1}/${this.maxRetries + 1})`;
+        this.logger(errorMessage);
+        await this.writeToLog(errorMessage);
         throw new GraphRequestError({
           status: response.status,
           statusText: response.statusText,
@@ -130,9 +147,31 @@ export class GraphClient {
         });
       }
 
+      const successMessage = `graph [${method}] ${normalizedPath} success (status=${response.status})`;
+      this.logger(successMessage);
+      await this.writeToLog(successMessage);
+
       return (text ? (JSON.parse(text) as T) : ({} as T));
     }
 
     throw new Error("Graph request retry loop exited unexpectedly.");
+  }
+
+  private async writeToLog(message: string): Promise<void> {
+    if (!this.logFilePath) {
+      return;
+    }
+
+    try {
+      const fs = await import("node:fs/promises");
+      const timestamp = new Date().toISOString();
+      const logLine = `[${timestamp}] ${message}\n`;
+      await fs.appendFile(this.logFilePath, logLine);
+    } catch (error) {
+      // Silently fail if file logging is unavailable
+      if (this.logger) {
+        this.logger(`graph [ERROR] Failed to write to log file: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
   }
 }
