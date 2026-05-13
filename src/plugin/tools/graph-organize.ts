@@ -1,4 +1,4 @@
-import { applyCategories, fetchMessageBodyAndHeaders, moveMessage } from "../../graph/emails.js";
+import { moveMessage, applyCategories } from "../../graph/emails.js";
 import { createFolder, getFolderByName } from "../../graph/folders.js";
 import type { GraphClient } from "../../graph/client.js";
 import type { ProcessingStateStore } from "../../pipeline/state.js";
@@ -38,20 +38,18 @@ export async function gtdOrganizeEmail(
   const existing = await getFolderByName(client, input.category);
   const folder = existing ?? (await createFolder(client, input.category));
 
-  // Move the message first
+  // Move the message first - internally fetches message to get proper ItemID for POST /move
   const moveResult = await moveMessage(client, input.messageId, folder.id);
 
-  // Fetch the updated message to get its ItemID (not unique ID) for categories API
-  // Microsoft Graph Categories endpoint requires ItemID format, not unique ID with AAMk prefix
-  const movedMessage = await fetchMessageBodyAndHeaders(client, moveResult.id);
-
-  const patched = await applyCategories(client, movedMessage.id, [input.outlookCategory]);
+  // Apply categories - internally fetches message to get proper ItemID for PATCH /categories
+  const patched = await applyCategories(client, moveResult.id, [input.outlookCategory]);
+  
   stateStore?.markProcessed(input.messageId, input.category);
 
   return {
     messageId: input.messageId,
     destinationFolderId: folder.id,
-    movedMessageId: movedMessage.id,
+    movedMessageId: moveResult.id,
     categories: patched.categories ?? [],
     folderCreated: existing === null,
     skipped: false,

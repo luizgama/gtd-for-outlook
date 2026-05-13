@@ -103,6 +103,7 @@ export async function fetchMessageBodyAndHeaders(
   client: GraphClient,
   messageId: string,
 ): Promise<EmailDetail> {
+  // GET requests accept unique ID format (AAMk...)
   return client.get<EmailDetail>(
     `/me/messages/${encodeURIComponent(messageId)}?$select=id,subject,sender,parentFolderId,body,internetMessageHeaders,categories`,
   );
@@ -113,7 +114,9 @@ export async function moveMessage(
   messageId: string,
   destinationId: string,
 ): Promise<EmailMessage> {
-  return client.post<EmailMessage>(`/me/messages/${encodeURIComponent(messageId)}/move`, {
+  // POST /move requires ItemID format, not unique ID. Fetch first to get proper ID.
+  const message = await fetchMessageBodyAndHeaders(client, messageId);
+  return client.post<EmailMessage>(`/me/messages/${encodeURIComponent(message.id)}/move`, {
     destinationId,
   });
 }
@@ -123,7 +126,9 @@ export async function applyCategories(
   messageId: string,
   categories: string[],
 ): Promise<EmailMessage> {
-  return client.patch<EmailMessage>(`/me/messages/${encodeURIComponent(messageId)}`, {
+  // PATCH /categories requires ItemID format, not unique ID. Fetch first to get proper ID.
+  const message = await fetchMessageBodyAndHeaders(client, messageId);
+  return client.patch<EmailMessage>(`/me/messages/${encodeURIComponent(message.id)}`, {
     categories,
   });
 }
