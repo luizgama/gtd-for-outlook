@@ -45,4 +45,21 @@ describe("security/sanitizer", () => {
     expect(typeof legacy.sanitized).toBe("string");
     expect(typeof legacy.truncated).toBe("boolean");
   });
+
+  it("redacts verification codes while preserving context", () => {
+    const raw = "Your verification code is 483921. Use this login code in 10 minutes.";
+    const result = sanitizeEmailContent(raw);
+    expect(result.flags).toContain("redacted_verification_code");
+    expect(result.sanitizedContent).toContain("verification code is [REDACTED_CODE]");
+    expect(result.sanitizedContent).toContain("login code");
+    expect(result.sanitizedContent).not.toContain("483921");
+  });
+
+  it("does not redact regular numbers without security context", () => {
+    const raw = "Invoice 202605 amount 120000 was approved.";
+    const result = sanitizeEmailContent(raw);
+    expect(result.flags).not.toContain("redacted_verification_code");
+    expect(result.sanitizedContent).toContain("202605");
+    expect(result.sanitizedContent).toContain("120000");
+  });
 });

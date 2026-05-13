@@ -45,4 +45,28 @@ describe("pipeline/triage", () => {
     });
     expect(decision).toBeNull();
   });
+
+  it("keeps duplicate vendor/system notices as reference by default", () => {
+    const decision = triageEmailMetadata({
+      id: "m5",
+      subject: "Incident update reminder",
+      sender: "noreply@vendor.example",
+      receivedAt: "2026-05-09T00:00:00.000Z",
+    });
+    expect(decision?.action).toBe("reference");
+  });
+
+  it("can archive duplicate vendor/system notices via preference", () => {
+    const decision = triageEmailMetadata(
+      {
+        id: "m6",
+        subject: "Maintenance follow-up update",
+        sender: "no-reply@vendor.example",
+        receivedAt: "2026-05-09T00:00:00.000Z",
+      },
+      new Date("2026-05-09T00:00:00.000Z"),
+      { duplicateVendorNoticePreference: "archive" },
+    );
+    expect(decision?.action).toBe("archive");
+  });
 });
