@@ -29,6 +29,7 @@ For production installation, OpenClaw setup, and real inbox validation, use:
 - Node.js 22+
 - A Microsoft 365 account
 - An Azure App Registration with `Mail.ReadWrite` permissions
+- OpenClaw CLI installed and authenticated
 
 ## Quick Start
 
@@ -37,16 +38,117 @@ For production installation, OpenClaw setup, and real inbox validation, use:
 git clone https://github.com/luizgama/gtd-for-outlook.git
 cd gtd-for-outlook
 npm ci
+npm run build
 
 # Configure Azure credentials
+cp .env.example .env
+# edit .env with GRAPH_CLIENT_ID and GRAPH_TENANT_ID
 gtd-outlook setup
 
 # Process your inbox
-gtd-outlook process
+gtd-outlook process --agent
 
 # Set up automatic processing every 30 minutes
 gtd-outlook schedule --every 30m
 ```
+
+## OpenClaw Setup
+
+Use this section to set up the GTD Orchestrator flow end-to-end in one pass.
+
+### 1) Set Environment Variables
+
+Create `.env` in the repo root:
+
+```bash
+cp .env.example .env
+```
+
+Set these required values:
+
+```bash
+GRAPH_CLIENT_ID=<your-azure-app-client-id>
+GRAPH_TENANT_ID=<your-azure-tenant-id-or-common>
+```
+
+Optional Graph request logging for troubleshooting:
+
+```bash
+export LOG_GRAPH_API_TO_FILE=true
+export LOG_GRAPH_API_FILE_PATH=/tmp/gtd-for-outlook/graph-api.log
+```
+
+Then run first-time auth setup:
+
+```bash
+gtd-outlook setup
+```
+
+### 2) Install/Enable the OpenClaw Plugin
+
+Refresh plugin registry and inspect runtime:
+
+```bash
+openclaw plugins registry --refresh --json
+openclaw plugins inspect gtd-outlook --json --runtime
+```
+
+Expected runtime output includes:
+- `status: loaded`
+- `toolNames` contains `gtd_fetch_emails`, `gtd_classify_email`, `gtd_organize_email`, `gtd_sanitize_content`, `gtd_weekly_review`
+
+If the plugin runtime entry is missing, rebuild and re-run inspect:
+
+```bash
+npm run build
+openclaw plugins inspect gtd-outlook --json --runtime
+```
+
+### 3) Configure the GTD Orchestrator Agent Tool Access
+
+Enable `llm-task` and allow GTD tools in the active tool profile:
+
+```bash
+openclaw config set plugins.entries.llm-task.enabled true
+openclaw config unset tools.allow
+openclaw config set tools.alsoAllow '["gtd_fetch_emails","gtd_classify_email","gtd_organize_email","gtd_weekly_review","llm-task"]' --strict-json
+```
+
+Validate effective tools:
+
+```bash
+openclaw gateway call tools.catalog --json --params '{"agentId":"main"}'
+openclaw gateway call tools.effective --json --params '{"agentId":"main","sessionKey":"agent:main:main"}'
+```
+
+Use [`openclaw/AGENTS.md`](openclaw/AGENTS.md) as the GTD Orchestrator behavior contract for the `main` agent.
+
+### 4) Run the GTD Orchestrator
+
+Manual validation run:
+
+```bash
+openclaw agent --agent main --message "Process my inbox using GTD. Use gtd_fetch_emails, then gtd_classify_email for each email, then gtd_organize_email. Return a compact summary." --session-id gtd-orchestrator-smoke --json --timeout 180
+```
+
+Or run via CLI:
+
+```bash
+gtd-outlook process --agent
+```
+
+### 5) Enable Scheduling (Optional)
+
+```bash
+gtd-outlook schedule --every 30m
+```
+
+### Troubleshooting
+
+- Missing env vars: verify `.env` has `GRAPH_CLIENT_ID` and `GRAPH_TENANT_ID`, then run `gtd-outlook setup` again.
+- Plugin not loaded: run `openclaw plugins registry --refresh --json` and `openclaw plugins inspect gtd-outlook --json --runtime`.
+- Tool not callable in agent run: verify `tools.effective` contains GTD tools and `llm-task`; if not, fix `tools.alsoAllow`.
+- Graph ID errors (folder/message mismatch): ensure organize flow uses `POST /me/messages/{messageId}/move` with folder `destinationId` (fixed in current codebase).
 
 ## Commands
 
