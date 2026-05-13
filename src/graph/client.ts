@@ -16,13 +16,35 @@ export type GraphClientOptions = {
 export class GraphRequestError extends Error {
   readonly status: number;
   readonly statusText: string;
-  readonly body: string;
+  readonly method: string;
+  readonly path: string;
+  readonly body: unknown;
+  readonly retryCount: number;
 
-  constructor(status: number, statusText: string, body: string) {
-    super(`Graph request failed (${status} ${statusText}): ${body}`);
+  constructor({
+    status,
+    statusText,
+    method,
+    path,
+    body,
+    retryCount,
+  }: {
+    status: number;
+    statusText: string;
+    method: string;
+    path: string;
+    body: unknown;
+    retryCount: number;
+  }) {
+    super(
+      `Graph request failed (${status} ${statusText}) - Method: ${method}, Path: ${path}, Body: ${JSON.stringify(body)} (Retry ${retryCount}/${DEFAULT_MAX_RETRIES + 1})`,
+    );
     this.status = status;
     this.statusText = statusText;
+    this.method = method;
+    this.path = path;
     this.body = body;
+    this.retryCount = retryCount;
   }
 }
 
@@ -74,7 +96,9 @@ export class GraphClient {
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
       const token = await this.tokenProvider();
-      this.logger(`graph ${method} ${normalizedPath} attempt=${attempt + 1}`);
+      this.logger(
+        `graph [${method}] ${normalizedPath} attempt=${attempt + 1}`,
+      );
 
       const response = await this.fetchImpl(url, {
         method,
@@ -88,14 +112,22 @@ export class GraphClient {
       if (response.status === 429 && attempt < this.maxRetries) {
         const retryAfter = parseRetryAfterSeconds(response.headers.get("Retry-After"));
         const delayMs = (retryAfter ?? 1) * 1000;
-        this.logger(`graph throttled retryAfter=${retryAfter ?? 1}s`);
+        this.logger(`graph [${method}] ${normalizedPath} throttled retryAfter=${retryAfter ?? 1}s`);
         await sleep(delayMs);
         continue;
       }
 
       const text = await response.text();
       if (!response.ok) {
-        throw new GraphRequestError(response.status, response.statusText, text);
+        const parsedBody: unknown = text ? (JSON.parse(text) as unknown) : null;
+        throw new GraphRequestError({
+          status: response.status,
+          statusText: response.statusText,
+          method,
+          path: normalizedPath,
+          body: parsedBody,
+          retryCount: attempt + 1,
+        });
       }
 
       return (text ? (JSON.parse(text) as T) : ({} as T));
