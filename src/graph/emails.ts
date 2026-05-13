@@ -111,41 +111,30 @@ export async function fetchMessageBodyAndHeaders(
 
 /**
  * Move a message to a destination folder.
- * 
+ *
  * Microsoft Graph /move endpoint requires:
- * - URL path: unique ID format (AAMk...) is accepted
- * - Body.destinationId: MUST be ItemID format (long hex string ending with =)
- * 
- * This function fetches the destination folder first to get its ItemID.
+ * - URL path: message ID
+ * - Body.destinationId: destination folder ID (or well-known folder name)
  */
 export async function moveMessage(
   client: GraphClient,
   messageId: string,
   destinationFolderId: string,
 ): Promise<EmailMessage> {
-  // Fetch destination folder to get its ItemID (required for POST /move body)
-  const destination = await fetchMessageBodyAndHeaders(client, destinationFolderId);
-
-  // Use unique ID in URL path, ItemID in body
-  return client.post<EmailMessage>(`/me/messages/${messageId}/move`, {
-    destinationId: destination.id,
+  return client.post<EmailMessage>(`/me/messages/${encodeURIComponent(messageId)}/move`, {
+    destinationId: destinationFolderId,
   });
 }
 
 /**
  * Apply Outlook categories to a message.
- * 
- * Microsoft Graph /categories endpoint requires ItemID format for the message ID.
  */
 export async function applyCategories(
   client: GraphClient,
   messageId: string,
   categories: string[],
 ): Promise<EmailMessage> {
-  // Fetch message to get its ItemID (required for PATCH /categories)
-  const message = await fetchMessageBodyAndHeaders(client, messageId);
-  
-  return client.patch<EmailMessage>(`/me/messages/${message.id}`, {
+  return client.patch<EmailMessage>(`/me/messages/${encodeURIComponent(messageId)}`, {
     categories,
   });
 }

@@ -55,8 +55,9 @@ describe("graph/emails", () => {
     expect(detail.internetMessageHeaders?.[0].name).toBe("List-Unsubscribe");
   });
 
-  it("moves message and applies categories", async () => {
+  it("moves message with folder destinationId and applies categories", async () => {
     const client = createMockClient();
+    const get = vi.spyOn(client, "get");
     const post = vi
       .spyOn(client, "post")
       .mockResolvedValue({ id: "m2", parentFolderId: "folder-1", subject: "moved" });
@@ -69,6 +70,7 @@ describe("graph/emails", () => {
 
     expect(moved.parentFolderId).toBe("folder-1");
     expect(categorized.categories).toContain("GTD: Action");
+    expect(get).not.toHaveBeenCalled();
     expect(post).toHaveBeenCalledWith("/me/messages/m1/move", { destinationId: "folder-1" });
     expect(patch).toHaveBeenCalledWith("/me/messages/m2", { categories: ["GTD: Action"] });
   });
