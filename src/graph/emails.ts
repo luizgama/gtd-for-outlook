@@ -99,6 +99,13 @@ export async function fetchMessagesPageByNextLink(
   };
 }
 
+/**
+ * Check if an ID is in unique ID format (AAMk...) or ItemID format (hex ending with =)
+ */
+function isUniqueIdFormat(id: string): boolean {
+  return id.startsWith("AAMk");
+}
+
 export async function fetchMessageBodyAndHeaders(
   client: GraphClient,
   messageId: string,
@@ -114,9 +121,9 @@ export async function moveMessage(
   messageId: string,
   destinationId: string,
 ): Promise<EmailMessage> {
-  // POST /move requires ItemID format, not unique ID. Fetch first to get proper ID.
-  const message = await fetchMessageBodyAndHeaders(client, messageId);
-  return client.post<EmailMessage>(`/me/messages/${encodeURIComponent(message.id)}/move`, {
+  // Microsoft Graph /move endpoint accepts unique ID format directly (no ItemID needed)
+  // Do NOT URL encode with encodeURIComponent() as it breaks the AAMk... format
+  return client.post<EmailMessage>(`/me/messages/${messageId}/move`, {
     destinationId,
   });
 }
@@ -126,9 +133,9 @@ export async function applyCategories(
   messageId: string,
   categories: string[],
 ): Promise<EmailMessage> {
-  // PATCH /categories requires ItemID format, not unique ID. Fetch first to get proper ID.
-  const message = await fetchMessageBodyAndHeaders(client, messageId);
-  return client.patch<EmailMessage>(`/me/messages/${encodeURIComponent(message.id)}`, {
+  // Microsoft Graph /categories endpoint accepts unique ID format directly (no ItemID needed)
+  // Do NOT URL encode with encodeURIComponent() as it breaks the AAMk... format
+  return client.patch<EmailMessage>(`/me/messages/${messageId}`, {
     categories,
   });
 }
