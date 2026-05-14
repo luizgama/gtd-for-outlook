@@ -90,13 +90,6 @@ export GRAPH_CLIENT_ID=<azure-application-client-id>
 export GRAPH_TENANT_ID=<tenant-id-or-common>
 ```
 
-Optional Graph request logging for the CLI settings layer:
-
-```bash
-export LOG_GRAPH_API_TO_FILE=true
-export LOG_GRAPH_API_FILE_PATH=/tmp/gtd-for-outlook/graph-api.log
-```
-
 ## Install The OpenClaw Plugin
 
 Build first, because `src/plugin/index.js` bridges OpenClaw to the compiled `dist/plugin/index.js` entry:
