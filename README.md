@@ -1,5 +1,7 @@
 # GTD for Outlook
 
+[Versao em Portugues do Brasil](README-ptbr.md)
+
 GTD for Outlook is an open-source Node.js CLI and OpenClaw plugin that organizes a Microsoft 365 mailbox using David Allen's Getting Things Done methodology.
 
 The project reads Outlook mail through Microsoft Graph, classifies messages into GTD buckets, moves or categorizes them, and can run through OpenClaw for agent orchestration, JSON-only LLM classification, and scheduled inbox processing.
